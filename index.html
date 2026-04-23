@@ -1772,12 +1772,12 @@ function initAddTextModal() {
     state.customTexts = state.customTexts || [];
     state.customTexts.push({ id: Date.now().toString(36), title, author, text });
     saveState();
-    toast(`Added "${title}" to library`);
     closeAddTextModal();
+    toast(`Added "${title}" to library`);
     const activePage = document.querySelector('.nav-item.active')?.dataset.page;
-    if (activePage === 'library') {
-      const mainEl = document.getElementById('main');
-      if (mainEl) mountLibrary(mainEl);
+    const mainEl = document.getElementById('main');
+    if (mainEl && (activePage === 'library' || activePage === 'rsvp' || activePage === 'pacer')) {
+      renderPage(activePage);
     }
   });
 }
@@ -2176,7 +2176,8 @@ function mountRSVP(root) {
    PACER READER (column with moving bar)
    ========================================================= */
 function mountPacer(root) {
-  let current = LIBRARY[0];
+  const allTexts = () => [...LIBRARY, ...(state.customTexts || []).map(t => ({ ...t, id: 'cx_'+t.id, difficulty: t.difficulty || 'custom', quiz: t.quiz || [] }))];
+  let current = allTexts()[0];
   let raf = null, running = false, startTs = 0, pausedMs = 0, lineIdx = 0;
   let metInterval = null;
 
@@ -2222,8 +2223,9 @@ function mountPacer(root) {
   `;
 
   const sel = root.querySelector('#txtPick');
-  LIBRARY.forEach(t => { const o = document.createElement('option'); o.value = t.id; o.textContent = `${t.title} — ${t.author}`; sel.appendChild(o); });
-  sel.addEventListener('change', () => { current = LIBRARY.find(t => t.id === sel.value); render(); reset(); });
+  allTexts().forEach(t => { const o = document.createElement('option'); o.value = t.id; o.textContent = t.id.startsWith('cx_') ? `[custom] ${t.title}` : `${t.title} — ${t.author}`; sel.appendChild(o); });
+  sel.value = current.id;
+  sel.addEventListener('change', () => { current = allTexts().find(t => t.id === sel.value); render(); reset(); });
 
   function render() {
     const host = root.querySelector('#txt');
@@ -3088,12 +3090,20 @@ function mountLibrary(root) {
       </div>
     </div>
 
+    <div class="row spread" style="margin-bottom:12px;">
+      <div class="text-3 mono" style="font-size:11px">${LIBRARY.length} built-in · ${state.customTexts.length} custom</div>
+      <button class="btn btn-add-text btn-sm" id="libAddText">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Your Own Text
+      </button>
+    </div>
+
     <div class="grid grid-2">
-      ${LIBRARY.map(t => `
+      ${[...LIBRARY, ...state.customTexts.map(t => ({ ...t, id: 'cx_'+t.id, difficulty: t.difficulty || 'custom', quiz: t.quiz || [], _custom: true }))].map(t => `
         <div class="card card-accent">
           <div class="card-head">
             <div>
-              <div class="card-title">${escapeHtml(t.title)}</div>
+              <div class="card-title">${escapeHtml(t.title)} ${t._custom ? '<span class="pill" style="margin-left:6px">custom</span>' : ''}</div>
               <div class="card-sub">${escapeHtml(t.author)} · ${t.difficulty} · ${t.text.split(/\s+/).length} words</div>
             </div>
             <span class="pill">${t.quiz.length} Q</span>
@@ -3104,6 +3114,7 @@ function mountLibrary(root) {
           <div class="row mt-16">
             <button class="btn btn-primary btn-sm" data-id="${t.id}" data-act="rsvp">Read RSVP</button>
             <button class="btn btn-sm" data-id="${t.id}" data-act="pacer">Pacer</button>
+            ${t._custom ? `<button class="btn btn-sm" data-rm="${t.id.replace(/^cx_/,'')}" style="margin-left:auto">Remove</button>` : ''}
           </div>
         </div>
       `).join('')}
@@ -3138,18 +3149,17 @@ function mountLibrary(root) {
 
   root.querySelectorAll('[data-act]').forEach(b => {
     b.addEventListener('click', () => {
-      const t = LIBRARY.find(x => x.id === b.dataset.id);
-      if (!t) return;
-      // navigate to target
+      const id = b.dataset.id;
       const target = b.dataset.act;
       document.querySelector(`.nav-item[data-page="${target}"]`).click();
-      // once there, set the select
       setTimeout(() => {
         const sel = document.querySelector('#textPick') || document.querySelector('#txtPick');
-        if (sel) { sel.value = t.id; sel.dispatchEvent(new Event('change')); }
+        if (sel) { sel.value = id; sel.dispatchEvent(new Event('change')); }
       }, 50);
     });
   });
+  const libAddBtn = root.querySelector('#libAddText');
+  if (libAddBtn) libAddBtn.addEventListener('click', () => openAddTextModal());
   root.querySelector('#ctAdd').addEventListener('click', () => {
     const title = root.querySelector('#ctTitle').value.trim();
     const body = root.querySelector('#ctBody').value.trim();
