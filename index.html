@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VELOCITY // Speed Reading Laboratory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Literata:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* =================================================================
+   VELOCITY — Electric Blue Futuristic Speed Reading Laboratory
+   Single-file HTML application
+   ================================================================= */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Core palette */
+  --accent: #0A84FF;
+  --accent-bright: #1E90FF;
+  --accent-dark: #0052CC;
+  --accent-cyan: #00D9FF;
+  --accent-deep: #003D99;
+  --hot: #FF006E;
+
+  /* Dark mode tokens (default) */
+  --bg: #000000;
+  --bg-1: #0A0A0C;
+  --bg-2: #141418;
+  --bg-3: #1C1C22;
+  --bg-elev: rgba(20, 20, 26, 0.65);
+  --text: #FFFFFF;
+  --text-2: #C8C9D1;
+  --text-3: #8B8D99;
+  --text-4: #55575F;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --glow-weak: 0 0 10px rgba(10, 132, 255, 0.4);
+  --glow: 0 0 20px rgba(10, 132, 255, 0.55), 0 0 40px rgba(10, 132, 255, 0.25);
+  --glow-strong: 0 0 30px rgba(10, 132, 255, 0.75), 0 0 60px rgba(10, 132, 255, 0.4), 0 0 100px rgba(10, 132, 255, 0.2);
+  --glow-cyan: 0 0 20px rgba(0, 217, 255, 0.55);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  /* Typography */
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Literata', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html[data-theme="light"] {
+  --bg: #FFFFFF;
+  --bg-1: #F7F8FA;
+  --bg-2: #EEF0F4;
+  --bg-3: #E4E7ED;
+  --bg-elev: rgba(255, 255, 255, 0.7);
+  --text: #000000;
+  --text-2: #343640;
+  --text-3: #6A6D78;
+  --text-4: #9FA2AB;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --glow-weak: 0 0 8px rgba(10, 132, 255, 0.3);
+  --glow: 0 0 16px rgba(10, 132, 255, 0.45), 0 0 32px rgba(10, 132, 255, 0.2);
+  --glow-strong: 0 0 24px rgba(10, 132, 255, 0.6), 0 0 48px rgba(10, 132, 255, 0.3);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+  transition: background 600ms var(--ease), color 600ms var(--ease);
+}
+
+/* Aurora backdrop */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(800px at 15% 20%, rgba(10, 132, 255, 0.18), transparent 60%),
+    radial-gradient(900px at 85% 70%, rgba(0, 217, 255, 0.10), transparent 65%),
+    radial-gradient(700px at 50% 100%, rgba(10, 132, 255, 0.08), transparent 60%);
+  animation: auroraFlow 14s ease-in-out infinite;
+}
+html[data-theme="light"] .aurora {
+  background:
+    radial-gradient(800px at 15% 20%, rgba(10, 132, 255, 0.10), transparent 60%),
+    radial-gradient(900px at 85% 70%, rgba(0, 217, 255, 0.06), transparent 65%),
+    radial-gradient(700px at 50% 100%, rgba(10, 132, 255, 0.04), transparent 60%);
+}
+@keyframes auroraFlow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-2%, 2%) scale(1.05); }
+}
+
+/* Fine grid overlay */
+.grid-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(10, 132, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 132, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 90%);
+}
+html[data-theme="light"] .grid-mesh {
+  background-image:
+    linear-gradient(rgba(10, 132, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 132, 255, 0.08) 1px, transparent 1px);
+}
+
+/* =========================
+   LAYOUT
+   ========================= */
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--bg-elev);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.brand-mark {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-cyan));
+  box-shadow: var(--glow);
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.brand-mark::after {
+  content: "";
+  position: absolute; inset: 2px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent 40%);
+  pointer-events: none;
+}
+.brand-mark svg { width: 22px; height: 22px; color: #fff; }
+.brand-text { line-height: 1; }
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+}
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+.nav-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-4);
+  padding: 8px 12px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+  transition: all 200ms var(--ease);
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+.nav-item:hover {
+  background: var(--bg-2);
+  color: var(--text);
+}
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(10,132,255,0.18), rgba(10,132,255,0.04));
+  color: var(--text);
+  border-color: rgba(10, 132, 255, 0.35);
+  box-shadow: inset 2px 0 0 var(--accent), var(--glow-weak);
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.85; }
+.nav-item.active svg { color: var(--accent); opacity: 1; }
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Main content */
+.main {
+  padding: 32px 40px 64px;
+  min-width: 0;
+}
+
+.page { display: none; animation: pageIn 500ms var(--ease); }
+.page.active { display: block; }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.page-title-accent {
+  background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-3);
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+/* =========================
+   COMPONENTS
+   ========================= */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  transition: border-color 300ms var(--ease), box-shadow 300ms var(--ease), transform 300ms var(--ease);
+}
+.card.glass {
+  background: var(--bg-elev);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.card-accent::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.7;
+}
+.card:hover { border-color: var(--border-strong); }
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.card-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  background: var(--bg-2);
+  color: var(--text);
+  transition: all 220ms var(--ease);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+.btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--glow);
+}
+.btn-primary:hover {
+  color: #fff;
+  box-shadow: var(--glow-strong);
+  transform: translateY(-2px);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+}
+.btn-sm { padding: 8px 14px; font-size: 12px; }
+.btn-lg { padding: 16px 28px; font-size: 14px; }
+.btn-icon {
+  width: 40px; height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.btn svg { width: 16px; height: 16px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+/* Inputs */
+.input, .select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: all 200ms var(--ease);
+}
+.input:focus, .select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15), var(--glow-weak);
+}
+textarea { resize: vertical; font-family: var(--font-body); min-height: 140px; }
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230A84FF' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+.label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+/* Range slider */
+.range-wrap { display: flex; align-items: center; gap: 16px; }
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  outline: none;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; height: 20px;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  box-shadow: var(--glow);
+  cursor: pointer;
+  transition: transform 200ms var(--ease);
+}
+.range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.range::-moz-range-thumb {
+  width: 20px; height: 20px;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  box-shadow: var(--glow);
+  cursor: pointer;
+}
+.range-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 64px;
+  text-align: right;
+  font-size: 14px;
+  text-shadow: var(--glow-weak);
+}
+
+/* Toggle */
+.toggle {
+  position: relative;
+  width: 44px; height: 24px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 200ms var(--ease);
+  flex-shrink: 0;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: var(--text-3);
+  border-radius: 50%;
+  transition: all 220ms var(--ease);
+}
+.toggle.on {
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  border-color: transparent;
+  box-shadow: var(--glow-weak);
+}
+.toggle.on::after {
+  left: 22px;
+  background: #fff;
+}
+
+/* Chip/segmented */
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  gap: 2px;
+}
+.seg button {
+  background: transparent;
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 7px;
+  color: var(--text-3);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 180ms var(--ease);
+}
+.seg button:hover { color: var(--text); }
+.seg button.active {
+  background: var(--bg-elev);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.4), var(--glow-weak);
+}
+
+/* Grids */
+.grid { display: grid; gap: 20px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 800px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; transform: translateX(-100%); z-index: 100; }
+}
+
+/* Stat */
+.stat { padding: 20px; }
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--accent);
+  text-shadow: var(--glow-weak);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.stat-unit {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-left: 6px;
+  font-weight: 500;
+}
+.stat-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--accent-cyan);
+}
+
+/* =========================
+   RSVP READER
+   ========================= */
+.reader-stage {
+  position: relative;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 32px;
+  min-height: 340px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.reader-stage.glass { background: var(--bg-elev); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.reader-stage::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(10, 132, 255, 0.25), transparent);
+  transform: translateY(-0.75em);
+  pointer-events: none;
+}
+.reader-stage::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(10, 132, 255, 0.25), transparent);
+  transform: translateY(0.75em);
+  pointer-events: none;
+}
+.rsvp-word {
+  font-family: var(--font-body);
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+.rsvp-word .orp {
+  color: var(--accent);
+  text-shadow: var(--glow-weak);
+}
+.rsvp-crosshair {
+  position: absolute;
+  width: 2px;
+  height: 34px;
+  background: linear-gradient(180deg, transparent, rgba(10, 132, 255, 0.4), transparent);
+  pointer-events: none;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 50%;
+}
+
+.reader-hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.hud-cell {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hud-cell .label { margin: 0; }
+.hud-val {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: var(--glow-weak);
+}
+
+.reader-progress {
+  position: relative;
+  height: 3px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.reader-progress-bar {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+  box-shadow: var(--glow);
+  transition: width 120ms linear;
+}
+
+.reader-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+/* =========================
+   PACER READER (Column)
+   ========================= */
+.pacer-stage {
+  position: relative;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 64px;
+  min-height: 420px;
+  overflow: hidden;
+}
+.pacer-text {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.9;
+  max-width: 58ch;
+  margin: 0 auto;
+  color: var(--text-2);
+  position: relative;
+}
+.pacer-line {
+  transition: color 160ms var(--ease);
+  padding: 2px 0;
+  position: relative;
+}
+.pacer-line.active {
+  color: var(--text);
+  background: linear-gradient(90deg, transparent, rgba(10, 132, 255, 0.10), transparent);
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.15);
+  border-radius: 4px;
+}
+.pacer-line.done { color: var(--text-4); }
+.pacer-bar {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: var(--glow);
+  pointer-events: none;
+  transition: top 200ms var(--ease);
+}
+
+/* =========================
+   SCHULTE TABLE
+   ========================= */
+.schulte-wrap {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.schulte {
+  display: grid;
+  gap: 4px;
+  background: var(--bg-1);
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.schulte-cell {
+  width: 78px; height: 78px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: all 160ms var(--ease);
+}
+.schulte-cell:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--glow-weak);
+}
+.schulte-cell.got {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(0, 217, 255, 0.1));
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}
+.schulte-cell.miss {
+  animation: shakeX 220ms ease-in-out;
+  border-color: var(--hot);
+  color: var(--hot);
+}
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.schulte-center {
+  position: relative;
+}
+.schulte-center::after {
+  content: "";
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--glow);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: pulseFix 2s ease-in-out infinite;
+}
+@keyframes pulseFix {
+  0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* =========================
+   FLASH GAMES (Tachistoscope)
+   ========================= */
+.flash-stage {
+  position: relative;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.flash-target {
+  font-family: var(--font-mono);
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: var(--glow-strong);
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transition: opacity 60ms linear;
+}
+.flash-target.on { opacity: 1; }
+.flash-target.word { font-family: var(--font-body); font-size: 52px; color: var(--text); text-shadow: none; }
+.flash-hint {
+  position: absolute;
+  bottom: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* =========================
+   STROOP
+   ========================= */
+.stroop-stage {
+  position: relative;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+}
+.stroop-word {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 86px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.stroop-choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.stroop-btn {
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 160ms var(--ease);
+}
+.stroop-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* =========================
+   ODD WORD OUT
+   ========================= */
+.odd-stage {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 24px;
+}
+.odd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.odd-btn {
+  padding: 24px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text);
+  border-radius: 14px;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 160ms var(--ease);
+}
+.odd-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-weak);
+}
+.odd-btn.correct {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(0, 217, 255, 0.1));
+  color: var(--accent);
+}
+.odd-btn.wrong {
+  border-color: var(--hot);
+  color: var(--hot);
+  animation: shakeX 220ms ease-in-out;
+}
+
+/* =========================
+   N-BACK
+   ========================= */
+.nback-stage {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+}
+.nback-target {
+  font-family: var(--font-mono);
+  font-size: 120px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: var(--glow-strong);
+  letter-spacing: 0.04em;
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+}
+.nback-controls { display: flex; gap: 12px; margin-top: 16px; }
+
+/* =========================
+   INTRUDER
+   ========================= */
+.intruder-grid {
+  display: grid;
+  gap: 6px;
+  padding: 24px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: fit-content;
+  margin: 0 auto;
+}
+.intruder-cell {
+  width: 56px; height: 56px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--text-2);
+  background: var(--bg-2);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid var(--border);
+  transition: all 140ms var(--ease);
+}
+.intruder-cell:hover { border-color: var(--accent); }
+.intruder-cell.hit {
+  background: rgba(10, 132, 255, 0.18);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* =========================
+   QUIZ
+   ========================= */
+.quiz-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+}
+.quiz-q {
+  font-family: var(--font-body);
+  font-size: 20px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.quiz-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 160ms var(--ease);
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  text-align: left;
+  width: 100%;
+}
+.quiz-choice:hover { border-color: var(--accent); }
+.quiz-choice.correct {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(0, 217, 255, 0.08));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.quiz-choice.wrong { border-color: var(--hot); color: var(--hot); }
+.quiz-choice-key {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+/* =========================
+   TOAST
+   ========================= */
+.toasts {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast {
+  background: var(--bg-elev);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: var(--text);
+  min-width: 240px;
+  animation: toastIn 400ms var(--ease-spring);
+  box-shadow: var(--shadow-lg);
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* =========================
+   MODAL
+   ========================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+  animation: modalFade 220ms var(--ease);
+}
+html[data-theme="light"] .modal-backdrop { background: rgba(20, 24, 40, 0.45); }
+.modal-backdrop.open { display: flex; }
+@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+.modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg), var(--glow);
+  animation: modalPop 280ms var(--ease-spring);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 160ms var(--ease);
+}
+.modal-close:hover { color: var(--text); border-color: var(--border-strong); background: var(--bg-2); }
+.modal-head { display: flex; align-items: center; gap: 14px; }
+.modal-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(10,132,255,0.18), rgba(0,217,255,0.12));
+  color: var(--accent-bright);
+  border: 1px solid rgba(10,132,255,0.35);
+  box-shadow: var(--glow-weak);
+}
+.modal-title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.modal-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.modal-foot {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mt-12 { margin-top: 12px; }
+
+/* Obvious dashboard CTA */
+.btn-add-text {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-cyan) 100%);
+  color: #fff;
+  border: none;
+  box-shadow: var(--glow);
+  font-weight: 600;
+}
+.btn-add-text:hover { filter: brightness(1.08); box-shadow: var(--glow-strong); }
+.btn-add-text svg { stroke: #fff; }
+
+/* =========================
+   SCROLLBAR
+   ========================= */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--bg-3);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Utility */
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mt-32 { margin-top: 32px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.hidden { display: none !important; }
+.text-2 { color: var(--text-2); }
+.text-3 { color: var(--text-3); }
+.accent { color: var(--accent); }
+.mono { font-family: var(--font-mono); }
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(10, 132, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(10, 132, 255, 0.3);
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+hr.sep {
+  border: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  margin: 16px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="aurora"></div>
+<div class="grid-mesh"></div>
+<div class="toasts" id="toasts"></div>
+
+<!-- Add-your-own-text modal -->
+<div class="modal-backdrop" id="addTextModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="addTextTitle">
+  <div class="modal-panel">
+    <button class="modal-close" id="addTextClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-head">
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="addTextTitle">Add your own text</div>
+        <div class="modal-sub">// paste an article, chapter, or any passage to read</div>
+      </div>
+    </div>
+    <div class="grid grid-2 mt-16">
+      <input class="input" id="amtTitle" placeholder="Title *" autocomplete="off"/>
+      <input class="input" id="amtAuthor" placeholder="Author (optional)" autocomplete="off"/>
+    </div>
+    <textarea class="input mt-12" id="amtBody" placeholder="Paste your text here..." rows="10"></textarea>
+    <div class="modal-foot">
+      <span class="text-3 mono" id="amtStat" style="font-size:11px">0 words</span>
+      <div class="row">
+        <button class="btn" id="amtCancel">Cancel</button>
+        <button class="btn btn-primary" id="amtAdd">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add to library
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">VELOCITY</div>
+        <div class="brand-sub">Speed Reading Lab</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Read</div>
+      <button class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-page="rsvp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        RSVP Reader
+      </button>
+      <button class="nav-item" data-page="pacer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M4 13h16"/><path d="M4 7h16"/></svg>
+        Pacer Reader
+      </button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Train</div>
+      <button class="nav-item" data-page="schulte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        Schulte Table
+      </button>
+      <button class="nav-item" data-page="flash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Tachistoscope
+      </button>
+      <button class="nav-item" data-page="odd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Odd Word Out
+      </button>
+      <button class="nav-item" data-page="nback">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10h-10V2z"/><path d="M21.17 8H12V2.83"/></svg>
+        N-Back Memory
+      </button>
+      <button class="nav-item" data-page="stroop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 1 0 10 10c0-1.05-.13-2.07-.36-3"/></svg>
+        Stroop
+      </button>
+      <button class="nav-item" data-page="intruder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Find Intruder
+      </button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">System</div>
+      <button class="nav-item" data-page="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Progress
+      </button>
+      <button class="nav-item" data-page="library">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Text Library
+      </button>
+      <button class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-sm" id="themeToggle" title="Toggle theme">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span id="themeLabel">Light</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" id="resetStats" title="Reset all data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <!-- Pages injected by JS -->
+  </main>
+</div>
+
+<script>
+/* =================================================================
+   VELOCITY — APPLICATION LOGIC
+   ================================================================= */
+
+/* ---------- Text Library ---------- */
+const LIBRARY = [
+  {
+    id: 'gatsby', title: 'The Great Gatsby — Opening', author: 'F. Scott Fitzgerald', difficulty: 'medium',
+    text: `In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since. "Whenever you feel like criticizing anyone," he told me, "just remember that all the people in this world haven't had the advantages that you've had." He didn't say any more, but we've always been unusually communicative in a reserved way, and I understood that he meant a great deal more than that. In consequence, I'm inclined to reserve all judgments, a habit that has opened up many curious natures to me and also made me the victim of not a few veteran bores. The abnormal mind is quick to detect and attach itself to this quality when it appears in a normal person, and so it came about that in college I was unjustly accused of being a politician, because I was privy to the secret griefs of wild, unknown men. Most of the confidences were unsought — frequently I have feigned sleep, preoccupation, or a hostile levity when I realized by some unmistakable sign that an intimate revelation was quivering on the horizon.`,
+    quiz: [
+      { q: 'What did the narrator\'s father advise him about?', a: ['Saving money', 'Not criticizing others', 'Choosing a career', 'Avoiding strangers'], correct: 1 },
+      { q: 'How does the narrator describe his approach to judgment?', a: ['Quick to judge', 'Inclined to reserve all judgments', 'Always harsh', 'Completely neutral'], correct: 1 },
+      { q: 'In college he was accused of being a what?', a: ['A politician', 'A snob', 'A cynic', 'A romantic'], correct: 0 }
+    ]
+  },
+  {
+    id: 'einstein', title: 'On the Method of Theoretical Physics', author: 'Albert Einstein', difficulty: 'hard',
+    text: `If you want to find out anything from the theoretical physicists about the methods they use, I advise you to stick closely to one principle: don't listen to their words, fix your attention on their deeds. To him who is a discoverer in this field, the products of his imagination appear so necessary and natural that he regards them, and would like to have them regarded by others, not as creations of thought but as given realities. These words sound like an invitation to you to walk out of this lecture. You will say to yourselves, the fellow's a working physicist; let him leave questions regarding the structure of theoretical science to the epistemologists. Against such criticism I can defend myself from the personal point of view by assuring you that it is not on my own initiative but at the kind invitation of others that I have mounted this rostrum, which commemorates a man who fought hard all his life for the unity of knowledge.`,
+    quiz: [
+      { q: 'What does Einstein advise about theoretical physicists?', a: ['Listen to their words carefully', 'Trust their intuition', 'Watch their deeds, not words', 'Avoid them'], correct: 2 },
+      { q: 'How do discoverers see their creations?', a: ['As pure fantasy', 'As given realities', 'As temporary guesses', 'As other people\'s ideas'], correct: 1 }
+    ]
+  },
+  {
+    id: 'moon', title: 'We Choose to Go to the Moon', author: 'John F. Kennedy', difficulty: 'easy',
+    text: `We choose to go to the Moon in this decade and do the other things, not because they are easy, but because they are hard; because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one we intend to win. It is for these reasons that I regard the decision last year to shift our efforts in space from low to high gear as among the most important decisions that will be made during my incumbency in the office of the Presidency. In the last 24 hours we have seen facilities now being created for the greatest and most complex exploration in man's history. We have felt the ground shake and the air shattered by the testing of a Saturn C-1 booster rocket.`,
+    quiz: [
+      { q: 'Why does Kennedy say we go to the Moon?', a: ['Because it is easy', 'Because it is hard', 'Because Russia demands it', 'Because it is cheap'], correct: 1 },
+      { q: 'What will the goal serve to do?', a: ['Organize and measure our best energies', 'Create entertainment', 'End the Cold War', 'Balance the budget'], correct: 0 }
+    ]
+  },
+  {
+    id: 'sherlock', title: 'A Study in Scarlet', author: 'Arthur Conan Doyle', difficulty: 'medium',
+    text: `In the year 1878 I took my degree of Doctor of Medicine of the University of London, and proceeded to Netley to go through the course prescribed for surgeons in the Army. Having completed my studies there, I was duly attached to the Fifth Northumberland Fusiliers as Assistant Surgeon. The regiment was stationed in India at the time, and before I could join it, the second Afghan war had broken out. On landing at Bombay, I learned that my corps had advanced through the passes, and was already deep in the enemy's country. I followed, however, with many other officers who were in the same situation as myself, and succeeded in reaching Candahar in safety, where I found my regiment, and at once entered upon my new duties. The campaign brought honours and promotion to many, but for me it had nothing but misfortune and disaster.`,
+    quiz: [
+      { q: 'In what year did Watson take his medical degree?', a: ['1868', '1878', '1888', '1898'], correct: 1 },
+      { q: 'What regiment was he attached to?', a: ['Fifth Northumberland Fusiliers', 'First Royal Dragoons', 'Third Guards', 'Seventh Highlanders'], correct: 0 }
+    ]
+  },
+  {
+    id: 'tao', title: 'Tao Te Ching — Chapter One', author: 'Lao Tzu', difficulty: 'medium',
+    text: `The Tao that can be told is not the eternal Tao. The name that can be named is not the eternal name. The nameless is the beginning of heaven and earth. The named is the mother of ten thousand things. Ever desireless, one can see the mystery. Ever desiring, one can see the manifestations. These two spring from the same source but differ in name; this appears as darkness. Darkness within darkness. The gate to all mystery. Empty and be full. Wear out and be new. Have little and gain. Have much and be confused. Therefore wise men embrace the one and set an example to all. Not putting on a display, they shine forth. Not justifying themselves, they are distinguished. Not boasting, they receive recognition. Not bragging, they never falter.`,
+    quiz: [
+      { q: 'What is the nameless said to be?', a: ['A delusion', 'The beginning of heaven and earth', 'The mother of things', 'The final truth'], correct: 1 },
+      { q: 'What happens when one is ever desireless?', a: ['One sees nothing', 'One sees the mystery', 'One sees manifestations', 'One becomes powerful'], correct: 1 }
+    ]
+  },
+  {
+    id: 'darwin', title: 'On the Origin of Species', author: 'Charles Darwin', difficulty: 'hard',
+    text: `When on board H.M.S. Beagle, as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent. These facts seemed to me to throw some light on the origin of species — that mystery of mysteries, as it has been called by one of our greatest philosophers. On my return home, it occurred to me, in 1837, that something might perhaps be made out on this question by patiently accumulating and reflecting on all sorts of facts which could possibly have any bearing on it. After five years' work I allowed myself to speculate on the subject, and drew up some short notes; these I enlarged in 1844 into a sketch of the conclusions, which then seemed to me probable.`,
+    quiz: [
+      { q: 'On what ship was Darwin a naturalist?', a: ['HMS Victory', 'HMS Beagle', 'HMS Endeavour', 'HMS Discovery'], correct: 1 },
+      { q: 'In what year did it occur to him to investigate species?', a: ['1831', '1837', '1844', '1859'], correct: 1 }
+    ]
+  },
+  {
+    id: 'space', title: 'The Fabric of the Cosmos', author: 'Brian Greene', difficulty: 'hard',
+    text: `Space and time capture the imagination like no other scientific subject. For good reason. They form the arena of reality, the very fabric of the cosmos. Our entire existence — everything we do, think and experience — takes place in some region of space during some interval of time. Yet science is still struggling to understand what space and time actually are. Are they real physical entities or simply useful ideas? If they're real, are they fundamental, or do they emerge from more basic constituents? What does it mean for space to be empty? Does time have a beginning? Does it have an arrow, flowing inexorably from past to future, as common experience would lead us to believe? Can we manipulate space and time? In this book, we follow three hundred years of passionate scientific investigation seeking answers, or at least glimpses of answers, to such basic but deep questions.`,
+    quiz: [
+      { q: 'What does the author call the "arena of reality"?', a: ['Space and time', 'Matter and energy', 'Gravity', 'Light'], correct: 0 },
+      { q: 'How many years of investigation does the book cover?', a: ['One hundred', 'Two hundred', 'Three hundred', 'Four hundred'], correct: 2 }
+    ]
+  }
+];
+
+const ODD_ROUNDS = [
+  { words: ['dog', 'cat', 'carrot', 'bird'], odd: 'carrot' },
+  { words: ['red', 'blue', 'warm', 'green'], odd: 'warm' },
+  { words: ['run', 'walk', 'jump', 'chair'], odd: 'chair' },
+  { words: ['apple', 'orange', 'banana', 'desk'], odd: 'desk' },
+  { words: ['piano', 'violin', 'hammer', 'guitar'], odd: 'hammer' },
+  { words: ['morning', 'evening', 'noon', 'pencil'], odd: 'pencil' },
+  { words: ['river', 'ocean', 'mountain', 'lake'], odd: 'mountain' },
+  { words: ['happy', 'joyful', 'angry', 'cheerful'], odd: 'angry' },
+  { words: ['silver', 'gold', 'copper', 'wheat'], odd: 'wheat' },
+  { words: ['circle', 'square', 'triangle', 'house'], odd: 'house' },
+  { words: ['doctor', 'nurse', 'teacher', 'surgeon'], odd: 'teacher' },
+  { words: ['rose', 'tulip', 'oak', 'daisy'], odd: 'oak' },
+  { words: ['fast', 'quick', 'rapid', 'slow'], odd: 'slow' },
+  { words: ['whale', 'shark', 'eagle', 'dolphin'], odd: 'eagle' },
+  { words: ['book', 'novel', 'library', 'magazine'], odd: 'library' },
+  { words: ['honest', 'truthful', 'sincere', 'deceptive'], odd: 'deceptive' },
+  { words: ['summer', 'winter', 'autumn', 'monday'], odd: 'monday' },
+  { words: ['copper', 'iron', 'silk', 'zinc'], odd: 'silk' },
+  { words: ['bread', 'butter', 'knife', 'cheese'], odd: 'knife' },
+  { words: ['sprint', 'jog', 'race', 'sleep'], odd: 'sleep' }
+];
+
+const FLASH_WORDS = [
+  'velocity', 'quantum', 'horizon', 'catalyst', 'paradigm', 'synthesis', 'radiance', 'gravity',
+  'momentum', 'cascade', 'aurora', 'eclipse', 'nebula', 'circuit', 'magnetic', 'resonance',
+  'threshold', 'equinox', 'spectrum', 'algorithm', 'lattice', 'prism', 'kinetic', 'orbital',
+  'silicon', 'neutron', 'photon', 'vertex', 'helix', 'pulse', 'zenith', 'apex'
+];
+const FLASH_PHRASES = [
+  'the quick brown fox', 'peripheral vision training', 'read with your eyes',
+  'focus on the center', 'expand your awareness', 'speed through the page',
+  'comprehension over speed', 'the words flow through', 'stay with the rhythm',
+  'breathe and absorb', 'capture every phrase', 'let meaning emerge'
+];
+
+const STROOP_COLORS = [
+  { name: 'RED', hex: '#FF3B30' },
+  { name: 'BLUE', hex: '#0A84FF' },
+  { name: 'GREEN', hex: '#30D158' },
+  { name: 'YELLOW', hex: '#FFD60A' },
+  { name: 'PURPLE', hex: '#BF5AF2' },
+  { name: 'ORANGE', hex: '#FF9F0A' }
+];
+
+/* ---------- State (persisted to localStorage) ---------- */
+const STATE_KEY = 'velocity_state_v1';
+const DEFAULT_STATE = {
+  settings: {
+    theme: 'dark',
+    wpm: 350,
+    chunk: 1,
+    orp: true,
+    punctuationPause: true,
+    readingFont: 'Literata',
+    displaySize: 56,
+    pacerSpeed: 1.4, // lines/sec
+    metronome: false,
+    bionic: false,
+    flashMs: 300,
+    flashDigits: 4,
+    schulteSize: 5,
+    nback: 2,
+    soundFx: true
+  },
+  stats: {
+    sessions: 0,
+    totalWords: 0,
+    totalMinutes: 0,
+    bestWpm: 0,
+    schulte: [], // {size, time, date}
+    flash: [],   // {correct, total, digits, ms, date}
+    stroop: [],  // {correct, total, avgRt, date}
+    nback: [],   // {n, correct, total, date}
+    odd: [],     // {correct, total, avgRt, date}
+    intruder: [],// {time, size, date}
+    reading: []  // {title, wpm, words, comp, date}
+  }
+};
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return structuredClone(DEFAULT_STATE);
+    const parsed = JSON.parse(raw);
+    return Object.assign(structuredClone(DEFAULT_STATE), parsed, {
+      settings: Object.assign({}, DEFAULT_STATE.settings, parsed.settings || {}),
+      stats: Object.assign({}, DEFAULT_STATE.stats, parsed.stats || {})
+    });
+  } catch (e) { return structuredClone(DEFAULT_STATE); }
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){}
+}
+let state = loadState();
+
+/* ---------- Toast ---------- */
+function toast(msg, ms = 2200) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity 300ms, transform 300ms';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(20px)';
+    setTimeout(() => el.remove(), 320);
+  }, ms);
+}
+
+/* ---------- Theme ---------- */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  document.getElementById('themeLabel').textContent = state.settings.theme === 'dark' ? 'Light' : 'Dark';
+  const icon = document.getElementById('themeIcon');
+  if (state.settings.theme === 'dark') {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  saveState();
+  applyTheme();
+});
+document.getElementById('resetStats').addEventListener('click', () => {
+  if (confirm('Reset all stats and settings? This cannot be undone.')) {
+    localStorage.removeItem(STATE_KEY);
+    state = loadState();
+    applyTheme();
+    renderPage(currentPage);
+    toast('All data reset');
+  }
+});
+
+/* ---------- Navigation ---------- */
+let currentPage = 'dashboard';
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPage = btn.dataset.page;
+    renderPage(currentPage);
+  });
+});
+
+/* ---------- Utilities ---------- */
+function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m > 0 ? `${m}:${String(sec).padStart(2,'0')}` : `${sec.toFixed(1)}s`;
+}
+function orpIndex(word) {
+  const len = word.replace(/[^a-zA-Z0-9]/g,'').length;
+  if (len <= 1) return 0;
+  if (len <= 3) return 1;
+  if (len <= 5) return 1;
+  if (len <= 9) return 2;
+  return Math.floor(len * 0.3);
+}
+function playBeep(freq = 800, ms = 50, vol = 0.07) {
+  if (!state.settings.soundFx) return;
+  try {
+    if (!window._actx) window._actx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = window._actx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.frequency.value = freq;
+    o.type = 'sine';
+    g.gain.value = vol;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + ms/1000);
+    o.stop(ctx.currentTime + ms/1000 + 0.01);
+  } catch(e){}
+}
+
+/* ---------- PAGE ROUTER ---------- */
+function renderPage(p) {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  switch(p) {
+    case 'dashboard': renderDashboard(main); break;
+    case 'rsvp': renderRSVP(main); break;
+    case 'pacer': renderPacer(main); break;
+    case 'schulte': renderSchulte(main); break;
+    case 'flash': renderFlash(main); break;
+    case 'odd': renderOdd(main); break;
+    case 'nback': renderNBack(main); break;
+    case 'stroop': renderStroop(main); break;
+    case 'intruder': renderIntruder(main); break;
+    case 'stats': renderStats(main); break;
+    case 'library': renderLibrary(main); break;
+    case 'settings': renderSettings(main); break;
+  }
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(root) {
+  const s = state.stats;
+  const recentReading = s.reading.slice(-1)[0];
+  const recentSchulte = s.schulte.slice(-1)[0];
+  root.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Welcome back, <span class="page-title-accent">operator</span>.</h1>
+          <div class="page-subtitle">// ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
+        </div>
+        <div class="row">
+          <button class="btn btn-add-text" id="dashAddText" aria-label="Add your own text">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Your Own Text
+          </button>
+          <button class="btn btn-primary" data-go="rsvp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start a session
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="card card-accent stat">
+          <div class="stat-label">Best WPM</div>
+          <div class="stat-value">${s.bestWpm || 0}<span class="stat-unit">wpm</span></div>
+          <div class="stat-delta">${s.bestWpm >= 400 ? '▲ advanced tier' : s.bestWpm >= 300 ? '▲ intermediate' : 'beginner'}</div>
+        </div>
+        <div class="card card-accent stat">
+          <div class="stat-label">Sessions</div>
+          <div class="stat-value">${s.sessions}</div>
+          <div class="stat-delta">${s.totalMinutes.toFixed(0)} min total</div>
+        </div>
+        <div class="card card-accent stat">
+          <div class="stat-label">Words Read</div>
+          <div class="stat-value">${s.totalWords.toLocaleString()}</div>
+          <div class="stat-delta">lifetime counter</div>
+        </div>
+        <div class="card card-accent stat">
+          <div class="stat-label">Drills Completed</div>
+          <div class="stat-value">${s.schulte.length + s.flash.length + s.stroop.length + s.nback.length + s.odd.length + s.intruder.length}</div>
+          <div class="stat-delta">across ${[s.schulte, s.flash, s.stroop, s.nback, s.odd, s.intruder].filter(x=>x.length).length} games</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2 mt-24">
+        <div class="card card-accent">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Today's training plan</div>
+              <div class="card-sub">recommended sequence</div>
+            </div>
+            <span class="pill">6 min warm-up</span>
+          </div>
+          <div class="row mb-16"><span class="kbd">1</span><div><b>Schulte Table</b> <span class="text-3 mono" style="font-size:12px">— 2 min peripheral vision</span></div></div>
+          <div class="row mb-16"><span class="kbd">2</span><div><b>Tachistoscope</b> <span class="text-3 mono" style="font-size:12px">— 2 min visual span</span></div></div>
+          <div class="row mb-16"><span class="kbd">3</span><div><b>RSVP Reading</b> <span class="text-3 mono" style="font-size:12px">— 10 min at ${state.settings.wpm} wpm</span></div></div>
+          <div class="row"><span class="kbd">4</span><div><b>Comprehension quiz</b> <span class="text-3 mono" style="font-size:12px">— verify retention</span></div></div>
+          <hr class="sep"/>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" data-go="schulte">Begin warm-up</button>
+            <button class="btn btn-sm" data-go="library">Pick text</button>
+          </div>
+        </div>
+
+        <div class="card card-accent">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Science panel</div>
+              <div class="card-sub">evidence-based anchors</div>
+            </div>
+          </div>
+          <p class="text-2" style="font-family:var(--font-body); line-height:1.7; font-size:14px;">
+            Peer-reviewed research (Keith Rayner et al., 2016) places the natural reading ceiling near <b class="accent">300 WPM</b> with full comprehension. Training to <b class="accent">350–450 WPM</b> is the realistic golden zone — a 40–80% gain — where speed and comprehension both climb. Our drills target the three evidence-backed levers: <span class="accent">peripheral span</span>, <span class="accent">fixation reduction</span>, and <span class="accent">working memory</span>.
+          </p>
+          <div class="divider"></div>
+          <div class="row">
+            <span class="pill">RSVP</span>
+            <span class="pill">Schulte</span>
+            <span class="pill">Chunking</span>
+            <span class="pill">Pacer</span>
+            <span class="pill">N-Back</span>
+            <span class="pill">Stroop</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-3 mt-24">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Recent reading</div>
+            <span class="card-sub">session</span>
+          </div>
+          ${recentReading ? `
+            <div class="stat-value" style="font-size:24px">${recentReading.wpm} <span class="stat-unit">wpm</span></div>
+            <div class="text-3 mt-8" style="font-size:13px">"${recentReading.title}" — ${recentReading.words} words</div>
+          ` : `<div class="text-3">No reading sessions yet. <a style="color:var(--accent)" href="#" data-go="rsvp">Start one →</a></div>`}
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Best Schulte (5x5)</div>
+            <span class="card-sub">time</span>
+          </div>
+          ${(() => {
+            const best5 = s.schulte.filter(r => r.size === 5).sort((a,b) => a.time - b.time)[0];
+            return best5
+              ? `<div class="stat-value" style="font-size:24px">${best5.time.toFixed(1)}<span class="stat-unit">s</span></div><div class="text-3 mt-8" style="font-size:13px">Keep scanning with center-fixation.</div>`
+              : `<div class="text-3">No results yet. <a style="color:var(--accent)" href="#" data-go="schulte">Try it →</a></div>`;
+          })()}
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">N-Back level</div>
+            <span class="card-sub">working memory</span>
+          </div>
+          <div class="stat-value" style="font-size:24px">${state.settings.nback}-back</div>
+          <div class="text-3 mt-8" style="font-size:13px">Attempts: ${s.nback.length}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  main.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => {
+    e.preventDefault();
+    const target = b.dataset.go;
+    document.querySelector(`.nav-item[data-page="${target}"]`).click();
+  }));
+  const addBtn = main.querySelector('#dashAddText');
+  if (addBtn) addBtn.addEventListener('click', () => openAddTextModal());
+}
+
+/* ---------- Add-text modal ---------- */
+function openAddTextModal() {
+  const m = document.getElementById('addTextModal');
+  if (!m) return;
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+  const t = document.getElementById('amtTitle');
+  setTimeout(() => t && t.focus(), 50);
+}
+function closeAddTextModal() {
+  const m = document.getElementById('addTextModal');
+  if (!m) return;
+  m.classList.remove('open');
+  m.setAttribute('aria-hidden', 'true');
+  ['amtTitle','amtAuthor','amtBody'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const st = document.getElementById('amtStat'); if (st) st.textContent = '0 words';
+}
+function initAddTextModal() {
+  const m = document.getElementById('addTextModal');
+  if (!m || m.dataset.wired) return;
+  m.dataset.wired = '1';
+  const body = document.getElementById('amtBody');
+  const stat = document.getElementById('amtStat');
+  body.addEventListener('input', () => {
+    const n = body.value.trim() ? body.value.trim().split(/\s+/).length : 0;
+    stat.textContent = `${n} word${n === 1 ? '' : 's'}`;
+  });
+  document.getElementById('addTextClose').addEventListener('click', closeAddTextModal);
+  document.getElementById('amtCancel').addEventListener('click', closeAddTextModal);
+  m.addEventListener('click', e => { if (e.target === m) closeAddTextModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && m.classList.contains('open')) closeAddTextModal();
+  });
+  document.getElementById('amtAdd').addEventListener('click', () => {
+    const title = document.getElementById('amtTitle').value.trim();
+    const author = document.getElementById('amtAuthor').value.trim() || 'Custom';
+    const text = document.getElementById('amtBody').value.trim();
+    if (!title) { toast('Title required'); return; }
+    if (!text || text.split(/\s+/).length < 5) { toast('Paste a longer passage'); return; }
+    state.customTexts = state.customTexts || [];
+    state.customTexts.push({ id: Date.now().toString(36), title, author, text });
+    saveState();
+    toast(`Added "${title}" to library`);
+    closeAddTextModal();
+    const activePage = document.querySelector('.nav-item.active')?.dataset.page;
+    if (activePage === 'library') {
+      const mainEl = document.getElementById('main');
+      if (mainEl) mountLibrary(mainEl);
+    }
+  });
+}
+
+/* ---------- Placeholder renderers (filled in next edit pass) ---------- */
+function renderRSVP(r){ r.innerHTML = '<div class="page active" id="_rsvp"></div>'; mountRSVP(r.querySelector('#_rsvp')); }
+function renderPacer(r){ r.innerHTML = '<div class="page active" id="_pacer"></div>'; mountPacer(r.querySelector('#_pacer')); }
+function renderSchulte(r){ r.innerHTML = '<div class="page active" id="_sch"></div>'; mountSchulte(r.querySelector('#_sch')); }
+function renderFlash(r){ r.innerHTML = '<div class="page active" id="_fl"></div>'; mountFlash(r.querySelector('#_fl')); }
+function renderOdd(r){ r.innerHTML = '<div class="page active" id="_od"></div>'; mountOdd(r.querySelector('#_od')); }
+function renderNBack(r){ r.innerHTML = '<div class="page active" id="_nb"></div>'; mountNBack(r.querySelector('#_nb')); }
+function renderStroop(r){ r.innerHTML = '<div class="page active" id="_st"></div>'; mountStroop(r.querySelector('#_st')); }
+function renderIntruder(r){ r.innerHTML = '<div class="page active" id="_in"></div>'; mountIntruder(r.querySelector('#_in')); }
+function renderStats(r){ r.innerHTML = '<div class="page active" id="_sts"></div>'; mountStats(r.querySelector('#_sts')); }
+function renderLibrary(r){ r.innerHTML = '<div class="page active" id="_lib"></div>'; mountLibrary(r.querySelector('#_lib')); }
+function renderSettings(r){ r.innerHTML = '<div class="page active" id="_set"></div>'; mountSettings(r.querySelector('#_set')); }
+
+// Placeholders — real implementations loaded in next script block
+function mountRSVP(r){}
+function mountPacer(r){}
+function mountSchulte(r){}
+function mountFlash(r){}
+function mountOdd(r){}
+function mountNBack(r){}
+function mountStroop(r){}
+function mountIntruder(r){}
+function mountStats(r){}
+function mountLibrary(r){}
+function mountSettings(r){}
+
+/* ---------- Boot ---------- */
+applyTheme();
+renderPage('dashboard');
+initAddTextModal();
+</script>
+
+<script id="modules">
+/* =================================================================
+   MODULES — the training games
+   ================================================================= */
+
+/* ---------- Shared: text tokenizer with ORP & punctuation awareness ---------- */
+function tokenize(text, chunkSize = 1) {
+  const words = text.replace(/\s+/g, ' ').trim().split(' ');
+  if (chunkSize === 1) return words;
+  const out = [];
+  let buf = [];
+  for (const w of words) {
+    buf.push(w);
+    // break chunk on end-punctuation or when full
+    const endsHard = /[.!?]$/.test(w);
+    if (buf.length >= chunkSize || endsHard) {
+      out.push(buf.join(' '));
+      buf = [];
+    }
+  }
+  if (buf.length) out.push(buf.join(' '));
+  return out;
+}
+function pauseMultiplier(token) {
+  if (!state.settings.punctuationPause) return 1;
+  const last = token.slice(-1);
+  if ('.!?'.includes(last)) return 2.5;
+  if (last === ',') return 1.4;
+  if (last === ';' || last === ':') return 1.9;
+  if (last === '-' || last === '—') return 1.3;
+  return 1;
+}
+function renderORP(token) {
+  if (!state.settings.orp || token.includes(' ')) {
+    // bionic style for chunks if enabled
+    if (state.settings.bionic) {
+      return token.split(' ').map(w => {
+        const n = Math.ceil(w.length * 0.5);
+        return `<b>${w.slice(0,n)}</b>${w.slice(n)}`;
+      }).join(' ');
+    }
+    return escapeHtml(token);
+  }
+  const clean = token;
+  const idx = orpIndex(clean);
+  const before = clean.slice(0, idx);
+  const orp = clean.slice(idx, idx+1) || '';
+  const after = clean.slice(idx+1);
+  return `${escapeHtml(before)}<span class="orp">${escapeHtml(orp)}</span>${escapeHtml(after)}`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+/* =========================================================
+   RSVP READER
+   ========================================================= */
+function mountRSVP(root) {
+  const library = LIBRARY;
+  let currentText = library[0];
+  let tokens = [];
+  let idx = 0;
+  let timer = null;
+  let running = false;
+  let startTs = 0;
+  let pausedMs = 0;
+  let pauseStart = 0;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">RSVP <span class="page-title-accent">Reader</span></h1>
+        <div class="page-subtitle">// rapid serial visual presentation — one flow state</div>
+      </div>
+      <div class="row">
+        <span class="pill" id="rsvpPill">READY</span>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div class="reader-stage glass" id="stage">
+          <span class="rsvp-crosshair"></span>
+          <div class="rsvp-word" id="word" style="font-size:${state.settings.displaySize}px">▷ press play</div>
+        </div>
+
+        <div class="reader-progress mt-16"><div class="reader-progress-bar" id="bar"></div></div>
+
+        <div class="reader-hud">
+          <div class="hud-cell"><span class="label">WPM</span><span class="hud-val" id="hudWpm">${state.settings.wpm}</span></div>
+          <div class="hud-cell"><span class="label">Chunk</span><span class="hud-val" id="hudChunk">${state.settings.chunk}</span></div>
+          <div class="hud-cell"><span class="label">Position</span><span class="hud-val" id="hudPos">0 / 0</span></div>
+          <div class="hud-cell"><span class="label">Elapsed</span><span class="hud-val" id="hudEl">0:00</span></div>
+        </div>
+
+        <div class="reader-controls">
+          <button class="btn btn-icon" id="back" title="−10 words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg></button>
+          <button class="btn btn-primary btn-lg" id="play">
+            <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="playLbl">Play</span>
+          </button>
+          <button class="btn btn-icon" id="fwd" title="+10 words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg></button>
+          <button class="btn" id="restart">Restart</button>
+          <button class="btn" id="quizBtn">Take Quiz</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card card-accent">
+          <div class="card-head">
+            <div class="card-title">Session</div>
+            <span class="card-sub">config</span>
+          </div>
+          <label class="label">Text</label>
+          <select class="select" id="textPick"></select>
+
+          <div class="mt-16">
+            <label class="label">Speed (WPM)</label>
+            <div class="range-wrap">
+              <input type="range" min="100" max="1000" step="10" value="${state.settings.wpm}" class="range" id="wpm"/>
+              <span class="range-value" id="wpmV">${state.settings.wpm}</span>
+            </div>
+          </div>
+
+          <div class="mt-16">
+            <label class="label">Chunk Size</label>
+            <div class="seg" id="chunkSeg">
+              ${[1,2,3,4,5].map(n => `<button data-v="${n}" class="${n===state.settings.chunk?'active':''}">${n}w</button>`).join('')}
+            </div>
+          </div>
+
+          <div class="mt-16 row spread">
+            <span class="label" style="margin:0">ORP highlight</span>
+            <div class="toggle ${state.settings.orp?'on':''}" id="tgORP"></div>
+          </div>
+          <div class="mt-16 row spread">
+            <span class="label" style="margin:0">Pause on punctuation</span>
+            <div class="toggle ${state.settings.punctuationPause?'on':''}" id="tgPP"></div>
+          </div>
+          <div class="mt-16 row spread">
+            <span class="label" style="margin:0">Bionic bold</span>
+            <div class="toggle ${state.settings.bionic?'on':''}" id="tgBio"></div>
+          </div>
+
+          <div class="mt-16">
+            <label class="label">Display size (px)</label>
+            <div class="range-wrap">
+              <input type="range" min="28" max="96" step="2" value="${state.settings.displaySize}" class="range" id="sz"/>
+              <span class="range-value" id="szV">${state.settings.displaySize}</span>
+            </div>
+          </div>
+
+          <hr class="sep"/>
+          <div class="row" style="justify-content:space-between">
+            <span class="text-3 mono" style="font-size:11px">Keyboard</span>
+            <span><span class="kbd">␣</span> <span class="text-3" style="font-size:11px">play</span> &nbsp; <span class="kbd">←</span><span class="kbd">→</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="quizHost"></div>
+  `;
+
+  // Fill text select
+  const sel = root.querySelector('#textPick');
+  library.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = `${t.title} — ${t.author}`;
+    sel.appendChild(o);
+  });
+  // add any custom texts from state
+  (state.customTexts || []).forEach(t => {
+    const o = document.createElement('option');
+    o.value = 'cx_'+t.id; o.textContent = `[custom] ${t.title}`;
+    sel.appendChild(o);
+  });
+  sel.value = currentText.id;
+  sel.addEventListener('change', () => {
+    const v = sel.value;
+    if (v.startsWith('cx_')) {
+      currentText = (state.customTexts || []).find(t => 'cx_'+t.id === v);
+    } else {
+      currentText = library.find(t => t.id === v);
+    }
+    resetRun();
+  });
+
+  function rebuildTokens() {
+    tokens = tokenize(currentText.text, state.settings.chunk);
+    root.querySelector('#hudPos').textContent = `${idx} / ${tokens.length}`;
+    updateBar();
+  }
+  function updateBar() {
+    root.querySelector('#bar').style.width = (tokens.length ? (idx/tokens.length)*100 : 0) + '%';
+  }
+  function showCurrent() {
+    const w = tokens[idx];
+    const el = root.querySelector('#word');
+    el.style.fontSize = state.settings.displaySize + 'px';
+    el.innerHTML = renderORP(w);
+  }
+  function resetRun() {
+    idx = 0;
+    pausedMs = 0;
+    rebuildTokens();
+    showCurrent();
+    root.querySelector('#hudEl').textContent = '0:00';
+    root.querySelector('#rsvpPill').textContent = 'READY';
+  }
+  rebuildTokens();
+  showCurrent();
+
+  function step() {
+    if (!running) return;
+    showCurrent();
+    root.querySelector('#hudPos').textContent = `${idx+1} / ${tokens.length}`;
+    updateBar();
+    const tok = tokens[idx];
+    const base = 60000 / state.settings.wpm;
+    const mult = pauseMultiplier(tok);
+    idx++;
+    if (idx >= tokens.length) {
+      stopRun(true);
+      return;
+    }
+    timer = setTimeout(step, base * mult);
+  }
+  function startRun() {
+    if (running) return;
+    running = true;
+    if (!startTs) startTs = performance.now();
+    if (pauseStart) { pausedMs += performance.now() - pauseStart; pauseStart = 0; }
+    root.querySelector('#playIcon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    root.querySelector('#playLbl').textContent = 'Pause';
+    root.querySelector('#rsvpPill').textContent = 'LIVE';
+    hudTick();
+    step();
+  }
+  function pauseRun() {
+    running = false;
+    clearTimeout(timer);
+    pauseStart = performance.now();
+    root.querySelector('#playIcon').innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    root.querySelector('#playLbl').textContent = 'Play';
+    root.querySelector('#rsvpPill').textContent = 'PAUSED';
+  }
+  function stopRun(completed) {
+    pauseRun();
+    if (completed) {
+      root.querySelector('#rsvpPill').textContent = 'DONE';
+      // Save session
+      const elapsed = (performance.now() - startTs - pausedMs)/1000;
+      const wordsActual = currentText.text.split(/\s+/).length;
+      const actualWpm = Math.round((wordsActual / elapsed) * 60);
+      state.stats.sessions++;
+      state.stats.totalWords += wordsActual;
+      state.stats.totalMinutes += elapsed/60;
+      state.stats.bestWpm = Math.max(state.stats.bestWpm, actualWpm);
+      state.stats.reading.push({ title: currentText.title, wpm: actualWpm, words: wordsActual, date: Date.now() });
+      saveState();
+      toast(`Session complete — ${actualWpm} WPM`);
+      if (currentText.quiz) showQuiz(currentText, actualWpm);
+    }
+  }
+  function hudTick() {
+    if (!running) return;
+    const el = (performance.now() - startTs - pausedMs)/1000;
+    root.querySelector('#hudEl').textContent = formatTime(el);
+    requestAnimationFrame(hudTick);
+  }
+
+  root.querySelector('#play').addEventListener('click', () => running ? pauseRun() : startRun());
+  root.querySelector('#restart').addEventListener('click', () => { pauseRun(); startTs = 0; pausedMs = 0; idx = 0; resetRun(); });
+  root.querySelector('#back').addEventListener('click', () => { idx = Math.max(0, idx - 10); showCurrent(); updateBar(); });
+  root.querySelector('#fwd').addEventListener('click', () => { idx = Math.min(tokens.length-1, idx + 10); showCurrent(); updateBar(); });
+  root.querySelector('#quizBtn').addEventListener('click', () => currentText.quiz && showQuiz(currentText, state.settings.wpm));
+
+  // Controls
+  root.querySelector('#wpm').addEventListener('input', e => {
+    state.settings.wpm = +e.target.value;
+    root.querySelector('#wpmV').textContent = state.settings.wpm;
+    root.querySelector('#hudWpm').textContent = state.settings.wpm;
+    saveState();
+  });
+  root.querySelector('#sz').addEventListener('input', e => {
+    state.settings.displaySize = +e.target.value;
+    root.querySelector('#szV').textContent = state.settings.displaySize;
+    root.querySelector('#word').style.fontSize = state.settings.displaySize+'px';
+    saveState();
+  });
+  root.querySelector('#chunkSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#chunkSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.settings.chunk = +b.dataset.v;
+    root.querySelector('#hudChunk').textContent = state.settings.chunk;
+    saveState();
+    rebuildTokens();
+    showCurrent();
+  });
+  root.querySelector('#tgORP').addEventListener('click', e => { state.settings.orp = !state.settings.orp; e.currentTarget.classList.toggle('on'); saveState(); showCurrent(); });
+  root.querySelector('#tgPP').addEventListener('click', e => { state.settings.punctuationPause = !state.settings.punctuationPause; e.currentTarget.classList.toggle('on'); saveState(); });
+  root.querySelector('#tgBio').addEventListener('click', e => { state.settings.bionic = !state.settings.bionic; e.currentTarget.classList.toggle('on'); saveState(); showCurrent(); });
+
+  // Keyboard
+  const keyHandler = e => {
+    if (currentPage !== 'rsvp') return;
+    if (e.code === 'Space') { e.preventDefault(); running ? pauseRun() : startRun(); }
+    if (e.code === 'ArrowLeft') { idx = Math.max(0, idx-5); showCurrent(); updateBar(); }
+    if (e.code === 'ArrowRight') { idx = Math.min(tokens.length-1, idx+5); showCurrent(); updateBar(); }
+  };
+  document.removeEventListener('keydown', window._rsvpKey);
+  window._rsvpKey = keyHandler;
+  document.addEventListener('keydown', keyHandler);
+
+  function showQuiz(txt, wpm) {
+    const host = root.querySelector('#quizHost');
+    let answered = 0, correct = 0;
+    host.innerHTML = `
+      <div class="card card-accent mt-24">
+        <div class="card-head"><div class="card-title">Comprehension quiz</div><span class="card-sub">${txt.quiz.length} questions</span></div>
+        <div id="qHolder"></div>
+      </div>
+    `;
+    const holder = host.querySelector('#qHolder');
+    txt.quiz.forEach((q, qi) => {
+      const box = document.createElement('div');
+      box.className = 'quiz-card mt-16';
+      box.innerHTML = `<div class="quiz-q">${qi+1}. ${escapeHtml(q.q)}</div>`;
+      q.a.forEach((ans, ai) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-choice';
+        btn.innerHTML = `<span class="quiz-choice-key">${String.fromCharCode(65+ai)}</span>${escapeHtml(ans)}`;
+        btn.addEventListener('click', () => {
+          if (btn.dataset.locked) return;
+          [...box.querySelectorAll('.quiz-choice')].forEach(x => x.dataset.locked = '1');
+          if (ai === q.correct) { btn.classList.add('correct'); correct++; }
+          else {
+            btn.classList.add('wrong');
+            box.querySelectorAll('.quiz-choice')[q.correct].classList.add('correct');
+          }
+          answered++;
+          if (answered === txt.quiz.length) {
+            const pct = Math.round((correct / txt.quiz.length)*100);
+            state.stats.reading.slice(-1)[0].comp = pct;
+            saveState();
+            toast(`Quiz: ${correct}/${txt.quiz.length} — ${pct}%`, 3000);
+          }
+        });
+        box.appendChild(btn);
+      });
+      holder.appendChild(box);
+    });
+    host.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+/* =========================================================
+   PACER READER (column with moving bar)
+   ========================================================= */
+function mountPacer(root) {
+  let current = LIBRARY[0];
+  let raf = null, running = false, startTs = 0, pausedMs = 0, lineIdx = 0;
+  let metInterval = null;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Pacer <span class="page-title-accent">Reader</span></h1>
+        <div class="page-subtitle">// column reading with a guiding bar — trains saccade discipline</div>
+      </div>
+      <div class="row"><span class="pill" id="pacerPill">READY</span></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div class="pacer-stage" id="stage">
+          <div class="pacer-text" id="txt"></div>
+          <div class="pacer-bar" id="pbar" style="top:0;display:none"></div>
+        </div>
+        <div class="reader-controls">
+          <button class="btn btn-primary btn-lg" id="play"><span id="playLbl">Start</span></button>
+          <button class="btn" id="reset">Restart</button>
+        </div>
+      </div>
+      <div>
+        <div class="card card-accent">
+          <div class="card-head"><div class="card-title">Configuration</div><span class="card-sub">pacer</span></div>
+          <label class="label">Text</label>
+          <select class="select" id="txtPick"></select>
+          <div class="mt-16">
+            <label class="label">Pacer speed (lines/sec)</label>
+            <div class="range-wrap">
+              <input type="range" min="0.5" max="4" step="0.1" value="${state.settings.pacerSpeed}" class="range" id="ps"/>
+              <span class="range-value" id="psV">${state.settings.pacerSpeed.toFixed(1)}</span>
+            </div>
+          </div>
+          <div class="mt-16 row spread">
+            <span class="label" style="margin:0">Metronome click</span>
+            <div class="toggle ${state.settings.metronome?'on':''}" id="tgMet"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const sel = root.querySelector('#txtPick');
+  LIBRARY.forEach(t => { const o = document.createElement('option'); o.value = t.id; o.textContent = `${t.title} — ${t.author}`; sel.appendChild(o); });
+  sel.addEventListener('change', () => { current = LIBRARY.find(t => t.id === sel.value); render(); reset(); });
+
+  function render() {
+    const host = root.querySelector('#txt');
+    // split into "lines" of ~55 chars
+    const words = current.text.split(/\s+/);
+    let line = '', lines = [];
+    for (const w of words) {
+      if ((line + ' ' + w).trim().length > 55) { lines.push(line.trim()); line = w; }
+      else line = (line + ' ' + w).trim();
+    }
+    if (line) lines.push(line);
+    host.innerHTML = lines.map(l => `<div class="pacer-line">${escapeHtml(l)}</div>`).join('');
+  }
+  render();
+
+  function reset() {
+    lineIdx = 0; running = false; startTs = 0; pausedMs = 0;
+    root.querySelector('#pbar').style.display = 'none';
+    root.querySelectorAll('.pacer-line').forEach(l => l.classList.remove('active','done'));
+    root.querySelector('#playLbl').textContent = 'Start';
+    root.querySelector('#pacerPill').textContent = 'READY';
+    if (raf) cancelAnimationFrame(raf);
+    if (metInterval) clearInterval(metInterval);
+  }
+  function step() {
+    const lines = [...root.querySelectorAll('.pacer-line')];
+    if (lineIdx >= lines.length) {
+      root.querySelector('#pacerPill').textContent = 'DONE';
+      root.querySelectorAll('.pacer-line').forEach(l => l.classList.add('done'));
+      root.querySelector('#pbar').style.display = 'none';
+      const elapsed = (performance.now() - startTs - pausedMs)/1000;
+      const words = current.text.split(/\s+/).length;
+      const wpm = Math.round(words/elapsed*60);
+      state.stats.reading.push({ title: current.title + ' (pacer)', wpm, words, date: Date.now() });
+      state.stats.sessions++;
+      state.stats.totalWords += words;
+      state.stats.totalMinutes += elapsed/60;
+      state.stats.bestWpm = Math.max(state.stats.bestWpm, wpm);
+      saveState();
+      toast(`Pacer complete — ${wpm} WPM`);
+      running = false;
+      if (metInterval) clearInterval(metInterval);
+      return;
+    }
+    lines.forEach((l,i) => {
+      l.classList.toggle('active', i === lineIdx);
+      l.classList.toggle('done', i < lineIdx);
+    });
+    // Position bar
+    const l = lines[lineIdx];
+    const rect = l.getBoundingClientRect();
+    const stage = root.querySelector('#stage');
+    const srect = stage.getBoundingClientRect();
+    const bar = root.querySelector('#pbar');
+    bar.style.display = 'block';
+    bar.style.top = (rect.top - srect.top + rect.height - 4) + 'px';
+    playBeep(820, 30, 0.04);
+    lineIdx++;
+  }
+  let pauseStartTs = 0;
+  function start() {
+    if (running) {
+      // Pause
+      running = false;
+      pauseStartTs = performance.now();
+      if (raf) cancelAnimationFrame(raf);
+      if (metInterval) clearInterval(metInterval);
+      root.querySelector('#playLbl').textContent = 'Resume';
+      root.querySelector('#pacerPill').textContent = 'PAUSED';
+      return;
+    }
+    // Start or resume
+    running = true;
+    if (!startTs) startTs = performance.now();
+    else if (pauseStartTs) { pausedMs += performance.now() - pauseStartTs; pauseStartTs = 0; }
+    root.querySelector('#playLbl').textContent = 'Pause';
+    root.querySelector('#pacerPill').textContent = 'LIVE';
+    const interval = 1000 / state.settings.pacerSpeed;
+    step();
+    metInterval = setInterval(() => { if (running) step(); }, interval);
+  }
+  root.querySelector('#play').addEventListener('click', start);
+  root.querySelector('#reset').addEventListener('click', reset);
+  root.querySelector('#ps').addEventListener('input', e => {
+    state.settings.pacerSpeed = parseFloat(e.target.value);
+    root.querySelector('#psV').textContent = state.settings.pacerSpeed.toFixed(1);
+    saveState();
+    if (running && metInterval) {
+      clearInterval(metInterval);
+      const interval = 1000 / state.settings.pacerSpeed;
+      metInterval = setInterval(() => { if (running) step(); }, interval);
+    }
+  });
+  root.querySelector('#tgMet').addEventListener('click', e => { state.settings.metronome = !state.settings.metronome; e.currentTarget.classList.toggle('on'); saveState(); });
+}
+
+/* =========================================================
+   SCHULTE TABLE
+   ========================================================= */
+function mountSchulte(root) {
+  let size = state.settings.schulteSize;
+  let next = 1;
+  let startTs = 0;
+  let misses = 0;
+  let running = false;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Schulte <span class="page-title-accent">Table</span></h1>
+        <div class="page-subtitle">// fixate center — scan periphery — find numbers in sequence</div>
+      </div>
+      <div class="row">
+        <div class="seg" id="szSeg">
+          <button data-v="3" class="${size===3?'active':''}">3×3</button>
+          <button data-v="5" class="${size===5?'active':''}">5×5</button>
+          <button data-v="7" class="${size===7?'active':''}">7×7</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div class="schulte-wrap">
+          <div class="schulte" id="grid" style="grid-template-columns:repeat(${size},1fr)"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card card-accent">
+          <div class="card-head"><div class="card-title">Run</div><span class="card-sub">stats</span></div>
+          <div class="stat">
+            <div class="stat-label">Find Next</div>
+            <div class="stat-value" id="nextN">${next}</div>
+          </div>
+          <div class="row spread mt-16">
+            <div>
+              <div class="stat-label">Time</div>
+              <div class="mono" style="font-size:22px;color:var(--accent);text-shadow:var(--glow-weak)" id="tm">0.0s</div>
+            </div>
+            <div>
+              <div class="stat-label">Misses</div>
+              <div class="mono" style="font-size:22px" id="ms">0</div>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-16" id="newGrid" style="width:100%">New table</button>
+          <hr class="sep"/>
+          <div class="text-3" style="font-size:12px; line-height:1.6">
+            <b class="accent">How to train:</b> Stare at the <span class="accent">blue dot</span> at center. Don't move your eyes — use peripheral vision to locate <span class="accent">1, 2, 3…</span> in order. Click each cell as you find it. Sub-20s on 5×5 is excellent.
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  function build() {
+    const total = size*size;
+    const nums = shuffle(Array.from({length: total}, (_,i) => i+1));
+    const grid = root.querySelector('#grid');
+    grid.style.gridTemplateColumns = `repeat(${size},1fr)`;
+    grid.innerHTML = '';
+    const center = Math.floor(total/2);
+    nums.forEach((n, i) => {
+      const c = document.createElement('div');
+      c.className = 'schulte-cell';
+      if (i === center) c.classList.add('schulte-center');
+      c.textContent = n;
+      c.addEventListener('click', () => onClick(c, n));
+      grid.appendChild(c);
+    });
+    next = 1; misses = 0; startTs = 0; running = false;
+    root.querySelector('#nextN').textContent = next;
+    root.querySelector('#tm').textContent = '0.0s';
+    root.querySelector('#ms').textContent = '0';
+  }
+  function onClick(cell, num) {
+    if (!running) { startTs = performance.now(); running = true; tick(); }
+    if (num === next) {
+      cell.classList.add('got');
+      playBeep(900, 40, 0.04);
+      next++;
+      root.querySelector('#nextN').textContent = next;
+      if (next > size*size) {
+        running = false;
+        const elapsed = (performance.now() - startTs)/1000;
+        state.stats.schulte.push({ size, time: elapsed, misses, date: Date.now() });
+        saveState();
+        toast(`Complete! ${elapsed.toFixed(1)}s · ${misses} miss${misses!==1?'es':''}`, 3500);
+        playBeep(1200, 200, 0.06);
+      }
+    } else {
+      misses++;
+      cell.classList.add('miss');
+      setTimeout(() => cell.classList.remove('miss'), 300);
+      playBeep(200, 80, 0.06);
+      root.querySelector('#ms').textContent = misses;
+    }
+  }
+  function tick() {
+    if (!running) return;
+    root.querySelector('#tm').textContent = ((performance.now()-startTs)/1000).toFixed(1)+'s';
+    requestAnimationFrame(tick);
+  }
+
+  root.querySelector('#szSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#szSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    size = +b.dataset.v;
+    state.settings.schulteSize = size;
+    saveState();
+    build();
+  });
+  root.querySelector('#newGrid').addEventListener('click', build);
+  build();
+}
+
+/* =========================================================
+   TACHISTOSCOPE (Flash)
+   ========================================================= */
+function mountFlash(root) {
+  let mode = 'number'; // 'number' | 'word' | 'phrase'
+  let digits = state.settings.flashDigits;
+  let ms = state.settings.flashMs;
+  let current = null, correct = 0, total = 0;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Tachisto<span class="page-title-accent">scope</span></h1>
+        <div class="page-subtitle">// flash training — widen your visual span</div>
+      </div>
+      <div class="seg" id="modeSeg">
+        <button data-v="number" class="active">Numbers</button>
+        <button data-v="word">Words</button>
+        <button data-v="phrase">Phrases</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div class="flash-stage">
+          <div class="flash-target" id="tgt">—</div>
+          <div class="flash-hint" id="hint">Press <span class="kbd">␣</span> to flash</div>
+        </div>
+        <div class="reader-controls">
+          <button class="btn btn-primary" id="flashBtn">Flash (Space)</button>
+          <input class="input" id="answer" placeholder="Type what you saw, press Enter" style="max-width:360px"/>
+          <button class="btn" id="submit">Submit</button>
+        </div>
+      </div>
+      <div>
+        <div class="card card-accent">
+          <div class="card-head"><div class="card-title">Config</div><span class="card-sub">difficulty</span></div>
+          <div id="digitsRow">
+            <label class="label">Digits (numbers mode)</label>
+            <div class="range-wrap">
+              <input type="range" min="1" max="9" step="1" value="${digits}" class="range" id="dg"/>
+              <span class="range-value" id="dgV">${digits}</span>
+            </div>
+          </div>
+          <div class="mt-16">
+            <label class="label">Flash duration (ms)</label>
+            <div class="range-wrap">
+              <input type="range" min="50" max="800" step="10" value="${ms}" class="range" id="msr"/>
+              <span class="range-value" id="msV">${ms}</span>
+            </div>
+          </div>
+          <hr class="sep"/>
+          <div class="row spread">
+            <div><div class="stat-label">Accuracy</div><div class="mono" style="font-size:22px;color:var(--accent)" id="acc">—</div></div>
+            <div><div class="stat-label">Correct</div><div class="mono" style="font-size:22px" id="co">0 / 0</div></div>
+          </div>
+          <button class="btn mt-16" id="resetF" style="width:100%">Reset counter</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const tgt = root.querySelector('#tgt');
+  const ans = root.querySelector('#answer');
+  function showDigitsRow() {
+    root.querySelector('#digitsRow').style.display = mode === 'number' ? '' : 'none';
+  }
+
+  function generate() {
+    if (mode === 'number') {
+      let n = '';
+      for (let i = 0; i < digits; i++) n += Math.floor(Math.random()*10);
+      return n;
+    } else if (mode === 'word') {
+      return randChoice(FLASH_WORDS);
+    } else {
+      return randChoice(FLASH_PHRASES);
+    }
+  }
+  function flash() {
+    current = generate();
+    tgt.textContent = current;
+    tgt.classList.toggle('word', mode !== 'number');
+    tgt.classList.remove('on');
+    void tgt.offsetWidth;
+    tgt.classList.add('on');
+    setTimeout(() => tgt.classList.remove('on'), ms);
+    ans.value = '';
+    ans.focus();
+  }
+  function submit() {
+    if (current == null) return;
+    const v = ans.value.trim().toLowerCase();
+    const expected = String(current).trim().toLowerCase();
+    total++;
+    if (v === expected) {
+      correct++;
+      toast('Correct', 1000);
+      playBeep(1000, 50, 0.05);
+    } else {
+      toast(`Was "${current}"`, 1800);
+      playBeep(300, 80, 0.05);
+    }
+    root.querySelector('#co').textContent = `${correct} / ${total}`;
+    root.querySelector('#acc').textContent = total ? Math.round(correct/total*100)+'%' : '—';
+    state.stats.flash.push({ correct, total, mode, digits, ms, date: Date.now() });
+    saveState();
+    current = null;
+  }
+  root.querySelector('#flashBtn').addEventListener('click', flash);
+  root.querySelector('#submit').addEventListener('click', submit);
+  ans.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  root.querySelector('#modeSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#modeSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    mode = b.dataset.v;
+    showDigitsRow();
+  });
+  root.querySelector('#dg').addEventListener('input', e => { digits = +e.target.value; state.settings.flashDigits = digits; root.querySelector('#dgV').textContent = digits; saveState(); });
+  root.querySelector('#msr').addEventListener('input', e => { ms = +e.target.value; state.settings.flashMs = ms; root.querySelector('#msV').textContent = ms; saveState(); });
+  root.querySelector('#resetF').addEventListener('click', () => {
+    correct = 0; total = 0;
+    root.querySelector('#co').textContent = '0 / 0';
+    root.querySelector('#acc').textContent = '—';
+  });
+
+  const key = e => {
+    if (currentPage !== 'flash') return;
+    if (e.code === 'Space' && document.activeElement !== ans) { e.preventDefault(); flash(); }
+  };
+  document.removeEventListener('keydown', window._flKey);
+  window._flKey = key;
+  document.addEventListener('keydown', key);
+}
+
+/* =========================================================
+   ODD WORD OUT
+   ========================================================= */
+function mountOdd(root) {
+  let pool = shuffle([...ODD_ROUNDS]);
+  let i = 0;
+  let correct = 0;
+  let startT = 0;
+  let rts = [];
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Odd Word <span class="page-title-accent">Out</span></h1>
+        <div class="page-subtitle">// rapid semantic processing — find the outlier</div>
+      </div>
+      <div class="row"><span class="pill" id="rPill">Round 1</span></div>
+    </div>
+
+    <div class="odd-stage">
+      <div class="odd-grid" id="grid"></div>
+      <div class="row mt-24" style="justify-content:center">
+        <div class="stat" style="padding:0"><div class="stat-label">Score</div><div class="mono accent" style="font-size:22px" id="sc">0</div></div>
+        <div class="stat" style="padding:0; margin-left:32px"><div class="stat-label">Avg response</div><div class="mono" style="font-size:22px" id="rt">—</div></div>
+      </div>
+    </div>
+  `;
+
+  function show() {
+    const r = pool[i % pool.length];
+    const words = shuffle([...r.words]);
+    const grid = root.querySelector('#grid');
+    grid.innerHTML = '';
+    startT = performance.now();
+    words.forEach(w => {
+      const b = document.createElement('button');
+      b.className = 'odd-btn';
+      b.textContent = w;
+      b.addEventListener('click', () => pick(b, w, r));
+      grid.appendChild(b);
+    });
+    root.querySelector('#rPill').textContent = `Round ${i+1}`;
+  }
+  function pick(btn, w, r) {
+    const t = (performance.now() - startT)/1000;
+    rts.push(t);
+    if (w === r.odd) {
+      btn.classList.add('correct');
+      correct++;
+      playBeep(1000, 40, 0.05);
+    } else {
+      btn.classList.add('wrong');
+      [...root.querySelectorAll('.odd-btn')].find(b => b.textContent === r.odd).classList.add('correct');
+      playBeep(300, 60, 0.05);
+    }
+    root.querySelector('#sc').textContent = correct;
+    root.querySelector('#rt').textContent = (rts.reduce((a,b)=>a+b,0)/rts.length).toFixed(2)+'s';
+    setTimeout(() => {
+      i++;
+      if (i >= 10) {
+        const avgRt = rts.reduce((a,b)=>a+b,0)/rts.length;
+        state.stats.odd.push({ correct, total: 10, avgRt, date: Date.now() });
+        saveState();
+        toast(`Round set done — ${correct}/10`);
+        i = 0; correct = 0; rts = []; pool = shuffle([...ODD_ROUNDS]);
+        root.querySelector('#sc').textContent = 0;
+      }
+      show();
+    }, 900);
+  }
+  show();
+}
+
+/* =========================================================
+   N-BACK
+   ========================================================= */
+function mountNBack(root) {
+  let n = state.settings.nback;
+  let seq = [];
+  let i = 0;
+  let running = false;
+  let responses = [];
+  let timer = null;
+  const LETTERS = 'BCDFGHJKLMNPQRSTVWXZ'.split('');
+  const TRIAL_MS = 2200;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">N-Back <span class="page-title-accent">Memory</span></h1>
+        <div class="page-subtitle">// working memory training — speed reading at high WPM depends on this</div>
+      </div>
+      <div class="row">
+        <div class="seg" id="nSeg">
+          ${[1,2,3,4].map(v => `<button data-v="${v}" class="${v===n?'active':''}">${v}-back</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div class="nback-stage">
+          <div class="nback-target" id="tgt">—</div>
+        </div>
+        <div class="nback-controls">
+          <button class="btn btn-primary btn-lg" id="match">Match (N)</button>
+          <button class="btn btn-lg" id="start">Start</button>
+        </div>
+      </div>
+      <div>
+        <div class="card card-accent">
+          <div class="card-head"><div class="card-title">Session</div><span class="card-sub">${n}-back</span></div>
+          <div class="row spread">
+            <div><div class="stat-label">Trial</div><div class="mono accent" style="font-size:22px" id="tr">0 / 20</div></div>
+            <div><div class="stat-label">Hits</div><div class="mono accent" style="font-size:22px" id="hi">0</div></div>
+          </div>
+          <div class="row spread mt-16">
+            <div><div class="stat-label">False alarms</div><div class="mono" style="font-size:22px" id="fa">0</div></div>
+            <div><div class="stat-label">Misses</div><div class="mono" style="font-size:22px" id="mi">0</div></div>
+          </div>
+          <hr class="sep"/>
+          <div class="text-3" style="font-size:12px; line-height:1.6">
+            You will see a letter every ~2s. Press <b class="accent">Match</b> (or <span class="kbd">M</span>) if the current letter matches the one shown <b>${n}</b> step${n>1?'s':''} ago. Ignore non-matches — don't press anything.
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  function genSeq(len = 20) {
+    const out = [];
+    for (let k = 0; k < len; k++) {
+      if (k >= n && Math.random() < 0.35) out.push(out[k-n]);
+      else out.push(randChoice(LETTERS));
+    }
+    return out;
+  }
+  function showStats() {
+    let hits = 0, fa = 0, miss = 0;
+    for (let k = n; k < responses.length; k++) {
+      const isMatch = seq[k] === seq[k-n];
+      const pressed = responses[k];
+      if (isMatch && pressed) hits++;
+      else if (!isMatch && pressed) fa++;
+      else if (isMatch && !pressed) miss++;
+    }
+    root.querySelector('#hi').textContent = hits;
+    root.querySelector('#fa').textContent = fa;
+    root.querySelector('#mi').textContent = miss;
+    return { hits, fa, miss };
+  }
+  function tick() {
+    if (i >= seq.length) {
+      running = false;
+      const stats = showStats();
+      const totalPossible = seq.slice(n).filter((_,k) => seq[k+n] === seq[k]).length;
+      state.stats.nback.push({ n, hits: stats.hits, total: totalPossible, fa: stats.fa, date: Date.now() });
+      saveState();
+      toast(`N-Back done — ${stats.hits} hits · ${stats.fa} false alarms`);
+      root.querySelector('#tgt').textContent = '✓';
+      return;
+    }
+    root.querySelector('#tgt').textContent = seq[i];
+    root.querySelector('#tr').textContent = `${i+1} / ${seq.length}`;
+    const thisIdx = i;
+    setTimeout(() => { if (thisIdx === i && running) root.querySelector('#tgt').textContent = '·'; }, 900);
+    i++;
+    timer = setTimeout(tick, TRIAL_MS);
+  }
+  function start() {
+    seq = genSeq(20);
+    responses = new Array(seq.length).fill(false);
+    i = 0;
+    running = true;
+    showStats();
+    tick();
+  }
+  function pressMatch() {
+    if (!running) return;
+    const k = i - 1;
+    if (k >= 0 && !responses[k]) {
+      responses[k] = true;
+      showStats();
+      const el = root.querySelector('#tgt');
+      el.style.color = 'var(--accent-cyan)';
+      el.style.textShadow = 'var(--glow-cyan)';
+      setTimeout(() => { el.style.color = ''; el.style.textShadow = ''; }, 200);
+    }
+  }
+  root.querySelector('#start').addEventListener('click', start);
+  root.querySelector('#match').addEventListener('click', pressMatch);
+  root.querySelector('#nSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#nSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    n = +b.dataset.v;
+    state.settings.nback = n;
+    saveState();
+  });
+  const key = e => {
+    if (currentPage !== 'nback') return;
+    if (e.key === 'm' || e.key === 'M' || e.code === 'Space') { e.preventDefault(); pressMatch(); }
+  };
+  document.removeEventListener('keydown', window._nbKey);
+  window._nbKey = key;
+  document.addEventListener('keydown', key);
+}
+
+/* =========================================================
+   STROOP
+   ========================================================= */
+function mountStroop(root) {
+  let i = 0, total = 20, correct = 0, rts = [];
+  let cur = null, start = 0;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Stroop <span class="page-title-accent">Test</span></h1>
+        <div class="page-subtitle">// click the INK color, ignore the word meaning — trains selective attention</div>
+      </div>
+      <div class="row"><span class="pill" id="sPill">0 / ${total}</span></div>
+    </div>
+
+    <div class="stroop-stage">
+      <div class="stroop-word" id="w">—</div>
+    </div>
+    <div class="stroop-choices" id="choices"></div>
+  `;
+
+  const choicesEl = root.querySelector('#choices');
+  STROOP_COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'stroop-btn';
+    b.textContent = c.name;
+    b.dataset.name = c.name;
+    b.addEventListener('click', () => click(c.name));
+    choicesEl.appendChild(b);
+  });
+
+  function next() {
+    if (i >= total) {
+      const avgRt = rts.reduce((a,b)=>a+b,0)/rts.length;
+      state.stats.stroop.push({ correct, total, avgRt, date: Date.now() });
+      saveState();
+      toast(`Stroop done — ${correct}/${total} · ${avgRt.toFixed(2)}s`, 3000);
+      i = 0; correct = 0; rts = [];
+    }
+    const word = randChoice(STROOP_COLORS);
+    let ink = randChoice(STROOP_COLORS);
+    if (Math.random() > 0.25) {
+      while (ink.name === word.name) ink = randChoice(STROOP_COLORS);
+    }
+    cur = { word, ink };
+    const w = root.querySelector('#w');
+    w.textContent = word.name;
+    w.style.color = ink.hex;
+    w.style.textShadow = `0 0 20px ${ink.hex}55, 0 0 40px ${ink.hex}33`;
+    start = performance.now();
+    root.querySelector('#sPill').textContent = `${i} / ${total}`;
+  }
+  function click(name) {
+    if (!cur) return;
+    const t = (performance.now()-start)/1000;
+    rts.push(t);
+    if (name === cur.ink.name) { correct++; playBeep(1000, 40, 0.04); }
+    else { playBeep(250, 80, 0.05); }
+    i++;
+    setTimeout(next, 250);
+  }
+  next();
+}
+
+/* =========================================================
+   FIND INTRUDER
+   ========================================================= */
+function mountIntruder(root) {
+  const PAIRS = [
+    { base: 'O', odd: 'Q' },
+    { base: 'O', odd: '0' },
+    { base: 'l', odd: 'I' },
+    { base: 'm', odd: 'n' },
+    { base: 'c', odd: 'e' },
+    { base: '5', odd: 'S' },
+    { base: 'o', odd: 'ø' },
+    { base: 'v', odd: 'y' },
+    { base: 'rn', odd: 'm' },
+    { base: 'a', odd: 'o' }
+  ];
+  let size = 5;
+  let pair = randChoice(PAIRS);
+  let oddIdx = 0;
+  let startT = 0;
+
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Find the <span class="page-title-accent">Intruder</span></h1>
+        <div class="page-subtitle">// rapid visual scanning — isolate the unique glyph</div>
+      </div>
+      <div class="seg" id="inSeg">
+        <button data-v="4" class="${size===4?'active':''}">4×4</button>
+        <button data-v="5" class="active">5×5</button>
+        <button data-v="6" class="${size===6?'active':''}">6×6</button>
+        <button data-v="7" class="${size===7?'active':''}">7×7</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 320px;">
+      <div>
+        <div id="gridHost"></div>
+      </div>
+      <div>
+        <div class="card card-accent">
+          <div class="card-head"><div class="card-title">Round</div><span class="card-sub">scan</span></div>
+          <div class="stat">
+            <div class="stat-label">Time</div>
+            <div class="mono accent" style="font-size:28px" id="tm">0.0s</div>
+          </div>
+          <div class="stat mt-16">
+            <div class="stat-label">Best (this session)</div>
+            <div class="mono" style="font-size:22px" id="best">—</div>
+          </div>
+          <button class="btn btn-primary mt-16" id="newR" style="width:100%">New round</button>
+          <hr class="sep"/>
+          <div class="text-3" style="font-size:12px; line-height:1.6">
+            One glyph in the grid differs. Scan fast. Bigger grids and more similar characters unlock as you improve.
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  let best = Infinity;
+  function render() {
+    pair = randChoice(PAIRS);
+    const host = root.querySelector('#gridHost');
+    const total = size*size;
+    oddIdx = randInt(0, total-1);
+    const g = document.createElement('div');
+    g.className = 'intruder-grid';
+    g.style.gridTemplateColumns = `repeat(${size},1fr)`;
+    for (let i = 0; i < total; i++) {
+      const c = document.createElement('div');
+      c.className = 'intruder-cell';
+      c.textContent = i === oddIdx ? pair.odd : pair.base;
+      c.addEventListener('click', () => {
+        if (i === oddIdx) {
+          const t = (performance.now() - startT)/1000;
+          c.classList.add('hit');
+          playBeep(1000, 80, 0.05);
+          best = Math.min(best, t);
+          root.querySelector('#best').textContent = best.toFixed(2)+'s';
+          state.stats.intruder.push({ time: t, size, date: Date.now() });
+          saveState();
+          toast(`Found in ${t.toFixed(2)}s`);
+          setTimeout(() => { render(); }, 700);
+        } else {
+          c.style.borderColor = 'var(--hot)';
+          setTimeout(() => c.style.borderColor = '', 200);
+        }
+      });
+      g.appendChild(c);
+    }
+    host.innerHTML = '';
+    host.appendChild(g);
+    startT = performance.now();
+    tick();
+  }
+  function tick() {
+    root.querySelector('#tm').textContent = ((performance.now()-startT)/1000).toFixed(1)+'s';
+    if (currentPage === 'intruder') requestAnimationFrame(tick);
+  }
+  root.querySelector('#inSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#inSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    size = +b.dataset.v;
+    render();
+  });
+  root.querySelector('#newR').addEventListener('click', render);
+  render();
+}
+
+/* =========================================================
+   STATS / PROGRESS
+   ========================================================= */
+function mountStats(root) {
+  const s = state.stats;
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Progress <span class="page-title-accent">Telemetry</span></h1>
+        <div class="page-subtitle">// your training history</div>
+      </div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card card-accent stat"><div class="stat-label">Best WPM</div><div class="stat-value">${s.bestWpm || 0}</div></div>
+      <div class="card card-accent stat"><div class="stat-label">Sessions</div><div class="stat-value">${s.sessions}</div></div>
+      <div class="card card-accent stat"><div class="stat-label">Words read</div><div class="stat-value">${s.totalWords.toLocaleString()}</div></div>
+      <div class="card card-accent stat"><div class="stat-label">Time trained</div><div class="stat-value">${Math.round(s.totalMinutes)}<span class="stat-unit">min</span></div></div>
+    </div>
+
+    <div class="card card-accent mt-24">
+      <div class="card-head"><div class="card-title">WPM trend</div><span class="card-sub">reading sessions</span></div>
+      <canvas id="chart" width="1100" height="260" style="width:100%;height:260px"></canvas>
+    </div>
+
+    <div class="grid grid-2 mt-24">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Recent reading sessions</div></div>
+        ${s.reading.length ? s.reading.slice(-10).reverse().map(r => `
+          <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+            <div style="font-size:13px;">${escapeHtml(r.title)}</div>
+            <div class="mono accent">${r.wpm} wpm</div>
+          </div>
+        `).join('') : '<div class="text-3">No sessions yet.</div>'}
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Game records</div></div>
+        <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+          <div>Schulte 5×5 (best)</div>
+          <div class="mono accent">${(() => { const b = s.schulte.filter(x=>x.size===5).sort((a,b)=>a.time-b.time)[0]; return b ? b.time.toFixed(1)+'s' : '—'; })()}</div>
+        </div>
+        <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+          <div>Tachistoscope sessions</div>
+          <div class="mono accent">${s.flash.length}</div>
+        </div>
+        <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+          <div>Stroop (best acc)</div>
+          <div class="mono accent">${(() => { const b = s.stroop.sort((a,b)=> (b.correct/b.total)-(a.correct/a.total))[0]; return b ? Math.round(b.correct/b.total*100)+'%' : '—'; })()}</div>
+        </div>
+        <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+          <div>N-Back attempts</div>
+          <div class="mono accent">${s.nback.length}</div>
+        </div>
+        <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+          <div>Odd Word sets</div>
+          <div class="mono accent">${s.odd.length}</div>
+        </div>
+        <div class="row spread" style="padding:10px 0;">
+          <div>Intruder rounds</div>
+          <div class="mono accent">${s.intruder.length}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  // Draw WPM chart
+  const canvas = root.querySelector('#chart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = 260;
+  canvas.width = w*dpr; canvas.height = h*dpr; ctx.scale(dpr, dpr);
+  const data = s.reading.slice(-30).map(r => r.wpm);
+  if (!data.length) {
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-3');
+    ctx.font = '12px "JetBrains Mono"';
+    ctx.fillText('No data yet — complete a reading session.', 20, 40);
+    return;
+  }
+  const max = Math.max(...data, 400), min = Math.min(...data, 0);
+  const pad = 24;
+  // axes grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad + (h-2*pad) * i/4;
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w-pad, y); ctx.stroke();
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-3');
+    ctx.font = '10px "JetBrains Mono"';
+    const val = Math.round(max - (max-min)*i/4);
+    ctx.fillText(val+'', 4, y+3);
+  }
+  // line
+  const grad = ctx.createLinearGradient(0,0,w,0);
+  grad.addColorStop(0, '#0A84FF');
+  grad.addColorStop(1, '#00D9FF');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#0A84FF';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = pad + (w-2*pad) * (data.length>1 ? i/(data.length-1) : 0.5);
+    const y = pad + (h-2*pad) * (1 - (v-min)/(max-min || 1));
+    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // Points
+  ctx.shadowBlur = 0;
+  data.forEach((v, i) => {
+    const x = pad + (w-2*pad) * (data.length>1 ? i/(data.length-1) : 0.5);
+    const y = pad + (h-2*pad) * (1 - (v-min)/(max-min || 1));
+    ctx.fillStyle = '#0A84FF';
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+}
+
+/* =========================================================
+   LIBRARY
+   ========================================================= */
+function mountLibrary(root) {
+  state.customTexts = state.customTexts || [];
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Text <span class="page-title-accent">Library</span></h1>
+        <div class="page-subtitle">// built-in passages · paste your own</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      ${LIBRARY.map(t => `
+        <div class="card card-accent">
+          <div class="card-head">
+            <div>
+              <div class="card-title">${escapeHtml(t.title)}</div>
+              <div class="card-sub">${escapeHtml(t.author)} · ${t.difficulty} · ${t.text.split(/\s+/).length} words</div>
+            </div>
+            <span class="pill">${t.quiz.length} Q</span>
+          </div>
+          <p class="text-2" style="font-family:var(--font-body); font-size:14px; line-height:1.6; max-height:110px; overflow:hidden; position:relative;">
+            ${escapeHtml(t.text.slice(0, 260))}…
+          </p>
+          <div class="row mt-16">
+            <button class="btn btn-primary btn-sm" data-id="${t.id}" data-act="rsvp">Read RSVP</button>
+            <button class="btn btn-sm" data-id="${t.id}" data-act="pacer">Pacer</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card card-accent mt-24">
+      <div class="card-head">
+        <div><div class="card-title">Add custom text</div><div class="card-sub">paste anything — article, email, chapter</div></div>
+      </div>
+      <div class="grid grid-2">
+        <input class="input" id="ctTitle" placeholder="Title"/>
+        <input class="input" id="ctAuthor" placeholder="Author (optional)"/>
+      </div>
+      <textarea class="input mt-16" id="ctBody" placeholder="Paste your text here..."></textarea>
+      <div class="row mt-16">
+        <button class="btn btn-primary" id="ctAdd">Add to library</button>
+        <span class="text-3 mono" style="font-size:11px" id="ctStat"></span>
+      </div>
+    </div>
+
+    ${state.customTexts.length ? `
+      <div class="card card-accent mt-24">
+        <div class="card-head"><div class="card-title">Custom texts</div></div>
+        ${state.customTexts.map(t => `
+          <div class="row spread" style="padding:10px 0; border-bottom:1px solid var(--border)">
+            <div><b>${escapeHtml(t.title)}</b> <span class="text-3 mono" style="font-size:11px">${t.text.split(/\s+/).length} words</span></div>
+            <button class="btn btn-sm" data-rm="${t.id}">Remove</button>
+          </div>
+        `).join('')}
+      </div>` : ''}
+  `;
+
+  root.querySelectorAll('[data-act]').forEach(b => {
+    b.addEventListener('click', () => {
+      const t = LIBRARY.find(x => x.id === b.dataset.id);
+      if (!t) return;
+      // navigate to target
+      const target = b.dataset.act;
+      document.querySelector(`.nav-item[data-page="${target}"]`).click();
+      // once there, set the select
+      setTimeout(() => {
+        const sel = document.querySelector('#textPick') || document.querySelector('#txtPick');
+        if (sel) { sel.value = t.id; sel.dispatchEvent(new Event('change')); }
+      }, 50);
+    });
+  });
+  root.querySelector('#ctAdd').addEventListener('click', () => {
+    const title = root.querySelector('#ctTitle').value.trim();
+    const body = root.querySelector('#ctBody').value.trim();
+    if (!title || !body) { toast('Title and body required'); return; }
+    state.customTexts.push({ id: Date.now().toString(36), title, author: root.querySelector('#ctAuthor').value.trim() || 'Custom', text: body });
+    saveState();
+    toast('Added to library');
+    mountLibrary(root);
+  });
+  root.querySelectorAll('[data-rm]').forEach(b => {
+    b.addEventListener('click', () => {
+      state.customTexts = state.customTexts.filter(t => t.id !== b.dataset.rm);
+      saveState();
+      mountLibrary(root);
+    });
+  });
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function mountSettings(root) {
+  const s = state.settings;
+  root.innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">System <span class="page-title-accent">Settings</span></h1>
+        <div class="page-subtitle">// global defaults applied across every module</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card card-accent">
+        <div class="card-head"><div class="card-title">Reading</div><span class="card-sub">rsvp & pacer</span></div>
+
+        <label class="label">Target WPM</label>
+        <div class="range-wrap">
+          <input type="range" min="100" max="1000" step="10" value="${s.wpm}" class="range" data-set="wpm"/>
+          <span class="range-value" data-setv="wpm">${s.wpm}</span>
+        </div>
+
+        <label class="label mt-16">Chunk size</label>
+        <div class="seg" data-segset="chunk">
+          ${[1,2,3,4,5].map(v => `<button data-v="${v}" class="${v===s.chunk?'active':''}">${v}w</button>`).join('')}
+        </div>
+
+        <label class="label mt-16">Display size (px)</label>
+        <div class="range-wrap">
+          <input type="range" min="28" max="96" step="2" value="${s.displaySize}" class="range" data-set="displaySize"/>
+          <span class="range-value" data-setv="displaySize">${s.displaySize}</span>
+        </div>
+
+        <label class="label mt-16">Pacer speed (lines/sec)</label>
+        <div class="range-wrap">
+          <input type="range" min="0.5" max="4" step="0.1" value="${s.pacerSpeed}" class="range" data-set="pacerSpeed"/>
+          <span class="range-value" data-setv="pacerSpeed">${s.pacerSpeed.toFixed(1)}</span>
+        </div>
+
+        <div class="mt-16 row spread"><span class="label" style="margin:0">ORP red highlight</span><div class="toggle ${s.orp?'on':''}" data-tg="orp"></div></div>
+        <div class="mt-16 row spread"><span class="label" style="margin:0">Pause on punctuation</span><div class="toggle ${s.punctuationPause?'on':''}" data-tg="punctuationPause"></div></div>
+        <div class="mt-16 row spread"><span class="label" style="margin:0">Bionic bolding</span><div class="toggle ${s.bionic?'on':''}" data-tg="bionic"></div></div>
+        <div class="mt-16 row spread"><span class="label" style="margin:0">Metronome click (pacer)</span><div class="toggle ${s.metronome?'on':''}" data-tg="metronome"></div></div>
+      </div>
+
+      <div class="card card-accent">
+        <div class="card-head"><div class="card-title">Drills</div><span class="card-sub">games</span></div>
+
+        <label class="label">Schulte default size</label>
+        <div class="seg" data-segset="schulteSize">
+          ${[3,5,7].map(v => `<button data-v="${v}" class="${v===s.schulteSize?'active':''}">${v}×${v}</button>`).join('')}
+        </div>
+
+        <label class="label mt-16">Flash duration (ms)</label>
+        <div class="range-wrap">
+          <input type="range" min="50" max="800" step="10" value="${s.flashMs}" class="range" data-set="flashMs"/>
+          <span class="range-value" data-setv="flashMs">${s.flashMs}</span>
+        </div>
+
+        <label class="label mt-16">Flash digits</label>
+        <div class="range-wrap">
+          <input type="range" min="1" max="9" step="1" value="${s.flashDigits}" class="range" data-set="flashDigits"/>
+          <span class="range-value" data-setv="flashDigits">${s.flashDigits}</span>
+        </div>
+
+        <label class="label mt-16">N-Back level</label>
+        <div class="seg" data-segset="nback">
+          ${[1,2,3,4].map(v => `<button data-v="${v}" class="${v===s.nback?'active':''}">${v}-back</button>`).join('')}
+        </div>
+
+        <div class="mt-16 row spread"><span class="label" style="margin:0">Sound effects</span><div class="toggle ${s.soundFx?'on':''}" data-tg="soundFx"></div></div>
+      </div>
+
+      <div class="card card-accent">
+        <div class="card-head"><div class="card-title">Appearance</div><span class="card-sub">theme</span></div>
+        <div class="row spread"><span class="label" style="margin:0">Theme</span>
+          <div class="seg" id="themeSeg">
+            <button data-v="dark" class="${s.theme==='dark'?'active':''}">Dark</button>
+            <button data-v="light" class="${s.theme==='light'?'active':''}">Light</button>
+          </div>
+        </div>
+        <hr class="sep"/>
+        <div class="text-3" style="font-size:12px;line-height:1.6">
+          Electric blue accent: <code class="mono" style="color:var(--accent)">#0A84FF</code><br>
+          Secondary cyan: <code class="mono" style="color:var(--accent-cyan)">#00D9FF</code>
+        </div>
+      </div>
+
+      <div class="card card-accent">
+        <div class="card-head"><div class="card-title">Data</div><span class="card-sub">storage</span></div>
+        <div class="text-3" style="font-size:13px; line-height:1.6">
+          All training data is stored locally in your browser (<span class="mono">localStorage</span>). Nothing is uploaded.
+        </div>
+        <div class="row mt-16">
+          <button class="btn" id="exp">Export JSON</button>
+          <button class="btn" id="imp">Import JSON</button>
+          <button class="btn" id="clr">Clear all</button>
+          <input type="file" id="impFile" accept="application/json" style="display:none">
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ranges
+  root.querySelectorAll('[data-set]').forEach(r => {
+    r.addEventListener('input', () => {
+      const k = r.dataset.set;
+      const v = +r.value;
+      state.settings[k] = v;
+      const vEl = root.querySelector(`[data-setv="${k}"]`);
+      if (k === 'pacerSpeed') vEl.textContent = v.toFixed(1);
+      else vEl.textContent = v;
+      saveState();
+    });
+  });
+  // toggles
+  root.querySelectorAll('[data-tg]').forEach(t => {
+    t.addEventListener('click', () => {
+      const k = t.dataset.tg;
+      state.settings[k] = !state.settings[k];
+      t.classList.toggle('on');
+      saveState();
+    });
+  });
+  // segments
+  root.querySelectorAll('[data-segset]').forEach(seg => {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...seg.querySelectorAll('button')].forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const k = seg.dataset.segset;
+      state.settings[k] = +b.dataset.v;
+      saveState();
+    });
+  });
+  // theme
+  root.querySelector('#themeSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.querySelectorAll('#themeSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.settings.theme = b.dataset.v;
+    saveState();
+    applyTheme();
+  });
+  // data
+  root.querySelector('#exp').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'velocity_data.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  root.querySelector('#imp').addEventListener('click', () => root.querySelector('#impFile').click());
+  root.querySelector('#impFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      state = Object.assign(structuredClone(DEFAULT_STATE), data);
+      saveState();
+      applyTheme();
+      renderPage('settings');
+      toast('Imported');
+    } catch(err){ toast('Invalid file'); }
+  });
+  root.querySelector('#clr').addEventListener('click', () => {
+    if (confirm('Clear all stats and settings?')) {
+      localStorage.removeItem(STATE_KEY);
+      state = loadState();
+      applyTheme();
+      renderPage('settings');
+      toast('Cleared');
+    }
+  });
+}
+</script>
+
+</body>
+</html>
